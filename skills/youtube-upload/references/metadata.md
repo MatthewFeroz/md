@@ -36,7 +36,7 @@ Chapters:
 - Start at `0:00`.
 - Use real topic transitions in ascending order.
 - Keep titles short and specific.
-- Aim for 8-14 chapters for a typical 10-30 minute video; follow the content rather than a quota.
+- The chapter cap is 10. Prefer broad topic sections and merge adjacent moments that serve the same idea.
 
 Add two to four resources only when the user supplied the URLs or they can be verified:
 
@@ -108,7 +108,7 @@ Resources:
 ## Audit
 
 - Trace every factual claim, proper noun, quote, and timestamp to the source or user clarification.
-- Confirm chapters begin at `0:00`, increase monotonically, and match real transitions.
+- Confirm chapters begin at `0:00`, increase monotonically, match real transitions, and stay within the chapter cap.
 - Confirm the tag string is comma-separated and no longer than 500 characters.
 - Confirm every resource and card URL is verified.
 - Confirm the file contains no placeholders, editing notes, or unrequested sections.
