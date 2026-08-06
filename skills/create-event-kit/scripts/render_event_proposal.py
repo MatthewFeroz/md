@@ -71,6 +71,25 @@ def render_partner_guide(url: str | None, label: str) -> str:
     return f'<a class="partner-guide" href="{safe_url}">{escape_text(label)} →</a>'
 
 
+def render_voices(entries: list[str], companies: list[str]) -> str:
+    values = entries or companies
+    voices: list[str] = []
+    for value in values:
+        name, separator, role = value.partition("|")
+        name = name.strip()
+        role = role.strip()
+        if not name:
+            raise ValueError("--voice entries must include a name before the optional |")
+        role_html = f'<p class="voice-role">{escape_text(role)}</p>' if separator and role else ""
+        voices.append(
+            '<div class="voice-item">'
+            f'<p class="voice-name">{escape_text(name)}</p>'
+            f"{role_html}"
+            "</div>"
+        )
+    return "".join(voices)
+
+
 def find_chrome() -> str | None:
     configured = os.environ.get("EVENT_PROPOSAL_CHROME")
     candidates = [
@@ -116,6 +135,11 @@ def main() -> int:
     parser.add_argument("output_folder", type=Path)
     parser.add_argument("--company", action="append", required=True, help="Repeat in display order")
     parser.add_argument("--discussion", action="append", help="Repeat for each discussion anchor")
+    parser.add_argument(
+        "--voice",
+        action="append",
+        help="Repeat as 'name|role or perspective'; defaults to company names",
+    )
     parser.add_argument("--audience", default="Audience to be confirmed.")
     parser.add_argument(
         "--outcome",
@@ -149,14 +173,13 @@ def main() -> int:
         for index, question in enumerate(discussions, start=1)
     )
     thesis = socials.get("main theme", title)
-    why_now = socials.get("main idea", paragraphs[0])
     values = {
         "DOCUMENT_TITLE": escape_text(f"{title} - Event Proposal"),
         "COMPANY_LINE": escape_text(" × ".join(args.company)),
         "TITLE": escape_text(title),
         "THESIS": escape_text(thesis),
         "OVERVIEW_HTML": overview_html,
-        "WHY_NOW": escape_text(why_now),
+        "VOICE_HTML": render_voices(args.voice or [], args.company),
         "DISCUSSION_HTML": discussion_html,
         "AUDIENCE": escape_text(args.audience),
         "OUTCOME": escape_text(args.outcome),

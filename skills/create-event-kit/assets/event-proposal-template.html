@@ -125,7 +125,7 @@
     }
 
     .overview p,
-    .why-now,
+    .voice-role,
     .discussion-text,
     .footer-value {
       margin: 0;
@@ -140,6 +140,30 @@
       border: 1px solid rgba(23, 23, 20, 0.09);
       border-radius: 14px;
       background: var(--panel);
+    }
+
+    .voice-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.09in;
+    }
+
+    .voice-item + .voice-item {
+      padding-top: 0.09in;
+      border-top: 1px solid var(--line);
+    }
+
+    .voice-name {
+      margin: 0 0 0.02in;
+      font-size: 9pt;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .voice-role {
+      color: #3f3f39;
+      font-size: 8.8pt;
+      line-height: 1.38;
     }
 
     .discussion-list {
@@ -247,8 +271,8 @@
         </section>
 
         <section class="card">
-          <div class="section-label">Why now</div>
-          <p class="why-now">{{WHY_NOW}}</p>
+          <div class="section-label">Key voices</div>
+          <div class="voice-list">{{VOICE_HTML}}</div>
         </section>
       </div>
 
