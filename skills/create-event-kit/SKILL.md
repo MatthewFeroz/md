@@ -84,6 +84,8 @@ python3 scripts/render_event_proposal.py <event-folder> <event-slug>-proposal \
   --pdf
 ```
 
+Before rendering, audit every visible string for company names. Include each named company in `--company` and require one matching official `<company-slug>-logo.<ext>` asset in `luma-event-poster/`; the renderer embeds every listed logo and fails when one is missing. The webpage is complete only when every company named anywhere on it is represented by a visible logo at least once.
+
 Use only source-grounded content. Add named speakers and headshots only when supplied; label every unresolved speaker or logistics field as to be confirmed. Keep unresolved logistics in the default next-step statement. Verify that `event-proposal.pdf` is exactly one Letter page, render it to an image, and inspect the complete page for clipping, overlap, or unreadable text.
 
 ## 4. Populate an unpublished Luma mockup

@@ -62,11 +62,11 @@
     .eyebrow-row {
       grid-template-columns: 1fr auto;
       gap: 20px;
+      align-items: center;
       padding-bottom: 0.14in;
       border-bottom: 1px solid var(--line);
     }
 
-    .companies,
     .proposal-label,
     .section-label,
     .footer-label {
@@ -77,8 +77,38 @@
       text-transform: uppercase;
     }
 
-    .companies { letter-spacing: 0.08em; }
     .proposal-label { color: var(--muted); }
+
+    .company-lockup {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.1in;
+    }
+
+    .company-logo {
+      width: auto;
+      max-width: 1.38in;
+      height: 0.23in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .company-logo img {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .company-separator {
+      color: var(--muted);
+      font-size: 8pt;
+      font-weight: 700;
+    }
 
     .hero h1 {
       max-width: 7in;
@@ -335,7 +365,7 @@
 <body>
   <main class="sheet">
     <header class="eyebrow-row">
-      <div class="companies">{{COMPANY_LINE}}</div>
+      <div class="company-lockup" aria-label="Participating companies">{{COMPANY_LOGO_HTML}}</div>
       <div class="proposal-label">Event proposal</div>
     </header>
 

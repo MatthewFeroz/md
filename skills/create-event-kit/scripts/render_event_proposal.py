@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_PATH = SKILL_ROOT / "assets" / "event-proposal-template.html"
 TOKEN_PATTERN = re.compile(r"\{\{[A-Z_]+\}\}")
+LOGO_EXTENSIONS = {".svg", ".png", ".jpg", ".jpeg", ".webp"}
 
 
 def escape_text(value: str) -> str:
@@ -76,12 +77,53 @@ def render_partner_guide(url: str | None, label: str) -> str:
 def file_data_uri(value: str) -> str:
     path = Path(value).expanduser().resolve()
     if not path.is_file():
-        raise ValueError(f"Speaker image does not exist: {path}")
+        raise ValueError(f"Image asset does not exist: {path}")
     mime_type = mimetypes.guess_type(path.name)[0]
     if not mime_type or not mime_type.startswith("image/"):
-        raise ValueError(f"Speaker image must use a recognized image format: {path.name}")
+        raise ValueError(f"Image asset must use a recognized image format: {path.name}")
     encoded = base64.b64encode(path.read_bytes()).decode("ascii")
     return f"data:{mime_type};base64,{encoded}"
+
+
+def company_slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    if not slug:
+        raise ValueError(f"Company name cannot be converted to a logo slug: {value!r}")
+    return slug
+
+
+def find_company_logo(event_folder: Path, company: str) -> Path:
+    logo_folder = event_folder / "luma-event-poster"
+    slug = company_slug(company)
+    matches = sorted(
+        path
+        for path in logo_folder.glob(f"{slug}-logo.*")
+        if path.is_file() and path.suffix.lower() in LOGO_EXTENSIONS
+    )
+    if not matches:
+        raise ValueError(
+            f"Missing official logo for {company}: expected {logo_folder / f'{slug}-logo.<ext>'}"
+        )
+    if len(matches) > 1:
+        raise ValueError(
+            f"Multiple logos found for {company}; keep one current primary asset: "
+            + ", ".join(str(path) for path in matches)
+        )
+    return matches[0]
+
+
+def render_company_logos(companies: list[str], event_folder: Path) -> str:
+    items: list[str] = []
+    for index, company in enumerate(companies):
+        if index:
+            items.append('<span class="company-separator" aria-hidden="true">×</span>')
+        logo_path = find_company_logo(event_folder, company)
+        items.append(
+            '<span class="company-logo">'
+            f'<img src="{file_data_uri(str(logo_path))}" alt="{escape_text(company)} logo">'
+            "</span>"
+        )
+    return "".join(items)
 
 
 def speaker_initials(name: str) -> str:
@@ -213,7 +255,7 @@ def main() -> int:
     thesis = socials.get("main theme", title)
     values = {
         "DOCUMENT_TITLE": escape_text(f"{title} - Event Proposal"),
-        "COMPANY_LINE": escape_text(" × ".join(args.company)),
+        "COMPANY_LOGO_HTML": render_company_logos(args.company, event_folder),
         "TITLE": escape_text(title),
         "THESIS": escape_text(thesis),
         "FORMAT": escape_text(args.format),
