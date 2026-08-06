@@ -48,7 +48,7 @@
         var(--paper);
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.15);
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
+      grid-template-rows: auto auto auto 1fr auto;
       gap: 0.22in;
     }
 
@@ -112,6 +112,38 @@
       gap: 0.34in;
     }
 
+    .logistics-grid {
+      display: grid;
+      grid-template-columns: 0.75fr 1.2fr 1fr;
+      overflow: hidden;
+      border: 1px solid rgba(23, 23, 20, 0.09);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    .logistics-item {
+      min-width: 0;
+      padding: 0.12in 0.16in;
+    }
+
+    .logistics-item + .logistics-item { border-left: 1px solid var(--line); }
+
+    .logistics-label {
+      margin-bottom: 0.03in;
+      color: var(--muted);
+      font-size: 7.4pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .logistics-value {
+      margin: 0;
+      font-size: 9.2pt;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
     .column {
       min-width: 0;
       display: flex;
@@ -142,28 +174,72 @@
       background: var(--panel);
     }
 
-    .voice-list {
+    .speaker-list {
       display: flex;
       flex-direction: column;
       gap: 0.09in;
     }
 
-    .voice-item + .voice-item {
+    .speaker-item {
+      display: grid;
+      grid-template-columns: 0.48in 1fr;
+      gap: 0.1in;
+      align-items: start;
+    }
+
+    .speaker-item + .speaker-item {
       padding-top: 0.09in;
       border-top: 1px solid var(--line);
     }
 
-    .voice-name {
+    .speaker-avatar {
+      width: 0.48in;
+      height: 0.48in;
+      overflow: hidden;
+      border-radius: 50%;
+      background: #e7e2d8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 8pt;
+      font-weight: 700;
+    }
+
+    .speaker-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .speaker-name {
       margin: 0 0 0.02in;
       font-size: 9pt;
       font-weight: 700;
       line-height: 1.3;
     }
 
-    .voice-role {
+    .speaker-title,
+    .speaker-bio {
+      margin: 0;
       color: #3f3f39;
       font-size: 8.8pt;
       line-height: 1.38;
+    }
+
+    .speaker-bio { margin-top: 0.04in; }
+
+    .speaker-status {
+      display: inline-block;
+      margin-top: 0.04in;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(244, 129, 32, 0.12);
+      color: #9d4a00;
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.25;
+      text-transform: uppercase;
     }
 
     .discussion-list {
@@ -230,7 +306,13 @@
       }
 
       .content-grid,
+      .logistics-grid,
       .footer-grid { grid-template-columns: 1fr; }
+
+      .logistics-item + .logistics-item {
+        border-top: 1px solid var(--line);
+        border-left: 0;
+      }
     }
 
     @media print {
@@ -263,6 +345,21 @@
       <div class="accent-rule" aria-hidden="true"></div>
     </section>
 
+    <section class="logistics-grid" aria-label="Event logistics">
+      <div class="logistics-item">
+        <div class="logistics-label">Format</div>
+        <p class="logistics-value">{{FORMAT}}</p>
+      </div>
+      <div class="logistics-item">
+        <div class="logistics-label">Target date</div>
+        <p class="logistics-value">{{EVENT_DATE}}</p>
+      </div>
+      <div class="logistics-item">
+        <div class="logistics-label">Venue</div>
+        <p class="logistics-value">{{VENUE}}</p>
+      </div>
+    </section>
+
     <section class="content-grid">
       <div class="column">
         <section>
@@ -270,16 +367,17 @@
           <div class="overview">{{OVERVIEW_HTML}}</div>
         </section>
 
-        <section class="card">
-          <div class="section-label">Key voices</div>
-          <div class="voice-list">{{VOICE_HTML}}</div>
-        </section>
       </div>
 
       <div class="column">
         <section>
           <div class="section-label">Discussion anchors</div>
           <div class="discussion-list">{{DISCUSSION_HTML}}</div>
+        </section>
+
+        <section class="card">
+          <div class="section-label">Speakers</div>
+          <div class="speaker-list">{{SPEAKER_HTML}}</div>
         </section>
       </div>
     </section>

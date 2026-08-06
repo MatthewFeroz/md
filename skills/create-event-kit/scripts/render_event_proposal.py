@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import html
+import mimetypes
 import os
 import re
 import shutil
@@ -71,23 +73,56 @@ def render_partner_guide(url: str | None, label: str) -> str:
     return f'<a class="partner-guide" href="{safe_url}">{escape_text(label)} →</a>'
 
 
-def render_voices(entries: list[str], companies: list[str]) -> str:
-    values = entries or companies
-    voices: list[str] = []
+def file_data_uri(value: str) -> str:
+    path = Path(value).expanduser().resolve()
+    if not path.is_file():
+        raise ValueError(f"Speaker image does not exist: {path}")
+    mime_type = mimetypes.guess_type(path.name)[0]
+    if not mime_type or not mime_type.startswith("image/"):
+        raise ValueError(f"Speaker image must use a recognized image format: {path.name}")
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def speaker_initials(name: str) -> str:
+    parts = [part for part in re.split(r"\s+", name.strip()) if part]
+    return "".join(part[0] for part in parts[:2]).upper() or "?"
+
+
+def render_speakers(entries: list[str], companies: list[str]) -> str:
+    values = entries or [f"{company} panelist||{company}|To be confirmed||" for company in companies]
+    speakers: list[str] = []
     for value in values:
-        name, separator, role = value.partition("|")
-        name = name.strip()
-        role = role.strip()
+        fields = value.split("|", 5)
+        fields.extend([""] * (6 - len(fields)))
+        name, title, company, status, image_path, bio = [field.strip() for field in fields]
         if not name:
-            raise ValueError("--voice entries must include a name before the optional |")
-        role_html = f'<p class="voice-role">{escape_text(role)}</p>' if separator and role else ""
-        voices.append(
-            '<div class="voice-item">'
-            f'<p class="voice-name">{escape_text(name)}</p>'
-            f"{role_html}"
-            "</div>"
+            raise ValueError("--speaker entries must begin with a name")
+        if image_path:
+            avatar = (
+                '<div class="speaker-avatar">'
+                f'<img src="{file_data_uri(image_path)}" alt="Headshot of {escape_text(name)}">'
+                "</div>"
+            )
+        else:
+            avatar = f'<div class="speaker-avatar">{escape_text(speaker_initials(name))}</div>'
+        title_line = ", ".join(part for part in [title, company] if part)
+        title_html = (
+            f'<p class="speaker-title">{escape_text(title_line)}</p>' if title_line else ""
         )
-    return "".join(voices)
+        status_html = (
+            f'<span class="speaker-status">{escape_text(status)}</span>' if status else ""
+        )
+        bio_html = f'<p class="speaker-bio">{escape_text(bio)}</p>' if bio else ""
+        speakers.append(
+            '<div class="speaker-item">'
+            f"{avatar}"
+            '<div class="speaker-copy">'
+            f'<p class="speaker-name">{escape_text(name)}</p>'
+            f"{title_html}{status_html}{bio_html}"
+            "</div></div>"
+        )
+    return "".join(speakers)
 
 
 def find_chrome() -> str | None:
@@ -136,10 +171,13 @@ def main() -> int:
     parser.add_argument("--company", action="append", required=True, help="Repeat in display order")
     parser.add_argument("--discussion", action="append", help="Repeat for each discussion anchor")
     parser.add_argument(
-        "--voice",
+        "--speaker",
         action="append",
-        help="Repeat as 'name|role or perspective'; defaults to company names",
+        help="Repeat as 'name|title|company|status|image path|bio'",
     )
+    parser.add_argument("--format", default="To be confirmed")
+    parser.add_argument("--event-date", default="To be confirmed")
+    parser.add_argument("--venue", default="To be confirmed")
     parser.add_argument("--audience", default="Audience to be confirmed.")
     parser.add_argument(
         "--outcome",
@@ -178,8 +216,11 @@ def main() -> int:
         "COMPANY_LINE": escape_text(" × ".join(args.company)),
         "TITLE": escape_text(title),
         "THESIS": escape_text(thesis),
+        "FORMAT": escape_text(args.format),
+        "EVENT_DATE": escape_text(args.event_date),
+        "VENUE": escape_text(args.venue),
         "OVERVIEW_HTML": overview_html,
-        "VOICE_HTML": render_voices(args.voice or [], args.company),
+        "SPEAKER_HTML": render_speakers(args.speaker or [], args.company),
         "DISCUSSION_HTML": discussion_html,
         "AUDIENCE": escape_text(args.audience),
         "OUTCOME": escape_text(args.outcome),

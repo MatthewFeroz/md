@@ -76,14 +76,15 @@ python3 scripts/render_event_proposal.py <event-folder> <event-slug>-proposal \
   --company "<company one>" --company "<company two>" \
   --discussion "<question one>" --discussion "<question two>" \
   --discussion "<question three>" \
-  --voice "<name>|<role or perspective>" \
+  --format "<format>" --event-date "<target date>" --venue "<venue or status>" \
+  --speaker "<name>|<title>|<company>|<status>|<image path>|<short bio>" \
   --audience "<source-grounded audience>" \
   --outcome "<source-grounded desired outcome>" \
   --partner-guide-url "<supplied partner-guide URL>" \
   --pdf
 ```
 
-Use only source-grounded content. Use named people as key voices only when supplied; otherwise list participating organizations and the perspective each contributes. Keep unresolved logistics in the default next-step statement. Verify that `event-proposal.pdf` is exactly one Letter page, render it to an image, and inspect the complete page for clipping, overlap, or unreadable text.
+Use only source-grounded content. Add named speakers and headshots only when supplied; label every unresolved speaker or logistics field as to be confirmed. Keep unresolved logistics in the default next-step statement. Verify that `event-proposal.pdf` is exactly one Letter page, render it to an image, and inspect the complete page for clipping, overlap, or unreadable text.
 
 ## 4. Populate an unpublished Luma mockup
 
