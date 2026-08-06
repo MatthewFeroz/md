@@ -27,13 +27,13 @@ Use the requested output path. Otherwise create a non-colliding event-slug folde
 
 ### `event-brief.md`
 
-Begin with one H1 event title, drafting a strong title when none is supplied. Follow with two or three prose paragraphs totaling 80–240 words:
+Begin with one H1 event title, drafting a strong title when none is supplied. Follow with three or four prose paragraphs totaling 80–240 words:
 
 1. Establish the timely change or tension.
 2. State the event's thesis and the questions participants will examine.
 3. Optionally add a distinct audience experience or takeaway.
 
-Use precise, conversational language. Make every relationship claim no stronger than the user's wording.
+Use precise, conversational language. Write short, separated paragraphs with direct sentences and natural transitions. Express relationships in prose instead of colon-led setup or list-shaped sequences. Make every relationship claim no stronger than the user's wording.
 
 ### `luma-event-poster/`
 

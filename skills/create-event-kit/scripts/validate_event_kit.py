@@ -75,8 +75,8 @@ def validate(root: Path) -> list[str]:
         if len(re.findall(r"(?m)^#{1,6} ", brief)) != 1:
             errors.append("event-brief.md must contain only its H1 title heading")
         paragraphs = prose_blocks(brief)
-        if not 2 <= len(paragraphs) <= 3:
-            errors.append("event-brief.md must contain two or three prose paragraphs")
+        if not 3 <= len(paragraphs) <= 4:
+            errors.append("event-brief.md must contain three or four prose paragraphs")
         brief_words = word_count(" ".join(paragraphs))
         if not 80 <= brief_words <= 240:
             errors.append(f"event-brief.md must contain 80–240 prose words; found {brief_words}")

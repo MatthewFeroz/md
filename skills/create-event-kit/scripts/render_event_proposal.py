@@ -247,10 +247,9 @@ def main() -> int:
     overview_html = "".join(f"<p>{escape_text(paragraph)}</p>" for paragraph in paragraphs)
     discussion_html = "".join(
         '<div class="discussion-item">'
-        f'<div class="discussion-number">{index:02d}</div>'
         f'<p class="discussion-text">{escape_text(question)}</p>'
         "</div>"
-        for index, question in enumerate(discussions, start=1)
+        for question in discussions
     )
     thesis = socials.get("main theme", title)
     values = {
