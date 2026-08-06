@@ -9,7 +9,12 @@ import sys
 from pathlib import Path
 
 
-EXPECTED_ENTRIES = {"event-brief.md", "luma-event-poster", "socials-description.md"}
+EXPECTED_ENTRIES = {
+    "event-brief.md",
+    "luma-event-poster",
+    "luma-preview.html",
+    "socials-description.md",
+}
 LOGO_EXTENSIONS = {".svg", ".png", ".jpg", ".jpeg", ".webp"}
 LOGO_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-logo\.(?:svg|png|jpe?g|webp)$")
 SOCIALS_PATTERN = re.compile(
@@ -116,6 +121,30 @@ def validate(root: Path) -> list[str]:
                     errors.append(f"{label} must contain {minimum}–{maximum} words; found {count}")
     elif socials_path.exists():
         errors.append("socials-description.md must be a file")
+
+    preview_path = root / "luma-preview.html"
+    if preview_path.is_file():
+        preview = preview_path.read_text(encoding="utf-8")
+        if not re.match(r"(?i)\A<!doctype html>", preview):
+            errors.append("luma-preview.html must begin with an HTML5 doctype")
+        if 'data-event-kit-preview="luma"' not in preview:
+            errors.append("luma-preview.html must include the Luma preview marker")
+        required_fragments = {
+            "Planning preview": "planning-preview label",
+            "Get Tickets": "registration card",
+            "About Event": "About Event section",
+        }
+        for fragment, label in required_fragments.items():
+            if fragment not in preview:
+                errors.append(f"luma-preview.html is missing its {label}")
+        if re.search(r"\{\{[A-Z_]+\}\}", preview):
+            errors.append("luma-preview.html contains unresolved template placeholders")
+        if re.search(r"(?i)<script\b", preview):
+            errors.append("luma-preview.html must not contain scripts")
+        if re.search(r'''(?i)\b(?:src|href)\s*=\s*["']https?://''', preview):
+            errors.append("luma-preview.html must not depend on external assets")
+    elif preview_path.exists():
+        errors.append("luma-preview.html must be a file")
 
     return errors
 
