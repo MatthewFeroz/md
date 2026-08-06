@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Event Kit"
+  short_description: "Build an event brief, logo folder, and socials"
+  default_prompt: "Use $create-event-kit to create an event brief, official logo folder, and social copy for my event."
