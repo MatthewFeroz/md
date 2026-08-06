@@ -73,7 +73,7 @@ Do this step only when the user asks for a Luma mockup or asks to populate Luma.
 
 Before entering other event content, set the event visibility to **Private** as a fail-safe. Then populate only supplied or source-grounded values:
 
-- Use the H1 from `event-brief.md` as the title.
+- Set the Luma title to `<company names joined by ×>: <H1>`. If the H1 already names every company, use it unchanged.
 - Use the brief's prose as the event description.
 - Enter date, time, timezone, location, hosts, ticketing, capacity, and registration settings only when supplied.
 - Upload a supplied final cover image when available. Do not treat the logo-only `luma-event-poster/` folder as a finished cover or invent a composite poster.
