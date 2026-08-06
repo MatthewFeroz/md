@@ -9,7 +9,7 @@ Turn an event concept into one reviewable folder with exactly three artifacts. W
 
 ## 1. Frame the event
 
-Extract the premise, participating companies, audience, tone, and any supplied title, format, logistics, or call to action from the prompt and source material. The explicit participating-company list controls the logo set. Use supplied facts only and omit unspecified logistics, speakers, quotes, and commitments from audience-facing copy. Ask one concise question only when the premise or company list remains materially ambiguous after inspection.
+Extract the premise, participating companies, audience, tone, and any supplied title, format, logistics, or call to action from the prompt and source material. Read every supplied source link with the appropriate connector or browser before treating a fact as unspecified; extract relevant logistics, speaker details, and partner requirements from those sources. The explicit participating-company list controls the logo set. Use supplied facts only and omit unspecified logistics, speakers, quotes, and commitments from audience-facing copy. Ask one concise question only when the premise or company list remains materially ambiguous after inspection.
 
 This step is complete when every participating company is named and the premise, audience, and supplied facts are unambiguous enough to write without invention.
 
