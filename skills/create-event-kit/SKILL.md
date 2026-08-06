@@ -1,6 +1,6 @@
 ---
 name: create-event-kit
-description: "Event-kit creation for a multi-company event: a short brief, official logos, social positioning, and an unpublished mockup in Luma's native create editor. Use when packaging an event for Luma and social promotion."
+description: "Event-kit creation for a multi-company event: a short brief, official logos, social positioning, a one-page HTML/PDF proposal, and an unpublished mockup in Luma's native create editor. Use when packaging or proposing an event for partners, Luma, and social promotion."
 ---
 
 # Create Event Kit
@@ -67,7 +67,24 @@ Distinguish the broad theme from the event's specific point of view. In the soci
 
 This step is complete when the three artifacts contain no drafts, manifests, source notes, hidden metadata, or internal placeholders.
 
-## 3. Populate an unpublished Luma mockup
+## 3. Create a one-page proposal when requested
+
+Keep the three-artifact event kit unchanged. Render a sibling proposal folder from the source kit:
+
+```bash
+python3 scripts/render_event_proposal.py <event-folder> <event-slug>-proposal \
+  --company "<company one>" --company "<company two>" \
+  --discussion "<question one>" --discussion "<question two>" \
+  --discussion "<question three>" \
+  --audience "<source-grounded audience>" \
+  --outcome "<source-grounded desired outcome>" \
+  --partner-guide-url "<supplied partner-guide URL>" \
+  --pdf
+```
+
+Use only source-grounded content. Keep unresolved logistics in the default next-step statement. Verify that `event-proposal.pdf` is exactly one Letter page, render it to an image, and inspect the complete page for clipping, overlap, or unreadable text.
+
+## 4. Populate an unpublished Luma mockup
 
 Do this step only when the user asks for a Luma mockup or asks to populate Luma. Use the current in-app browser and open Luma's native create editor at `https://luma.com/create`. If Luma requires authentication, ask the user to sign in within that browser, then resume from the same create page.
 
@@ -95,7 +112,7 @@ Leave the populated create editor open for review. Capture desktop and mobile sc
 
 Publishing is a separate task. Require an explicit user request to create the real event before crossing this boundary.
 
-## 4. Audit and deliver
+## 5. Audit and deliver
 
 Verify that each logo is non-empty, matches its file extension, and traces to an official source. From this Skill directory, run:
 
@@ -105,6 +122,6 @@ python3 scripts/validate_event_kit.py <event-folder>
 
 Fix every reported error. Then reread both Markdown files for a consistent premise, company list, audience, and logistics; remove unsupported claims and inflated language. Preserve open questions as questions. If a Luma mockup was requested, inspect the live editor preview without submitting it and apply the safety checks above.
 
-Return the event-folder path, a one-sentence creative-direction summary, and each official logo source URL in chat so provenance stays outside the three-artifact package. Also report whether the Luma editor was populated, which fields remain unresolved, and that no event was created.
+Return the event-folder path, a one-sentence creative-direction summary, and each official logo source URL in chat so provenance stays outside the three-artifact package. If requested, also return the proposal HTML and PDF paths. Report whether the Luma editor was populated, which fields remain unresolved, and that no event was created.
 
 This step is complete only when the validator passes, every claim is source-grounded, and every participating company has an official logo or an explicitly reported missing asset with usage requirements surfaced. If a Luma mockup was requested, it must also remain unpublished in the native create editor with no event ID or URL.
