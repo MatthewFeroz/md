@@ -1,11 +1,11 @@
 ---
 name: create-event-kit
-description: "Event-kit creation for a multi-company event: a short brief, official logos, social positioning, and a responsive Luma-style HTML planning preview. Use when packaging an event for Luma and social promotion."
+description: "Event-kit creation for a multi-company event: a short brief, official logos, social positioning, and an unpublished mockup in Luma's native create editor. Use when packaging an event for Luma and social promotion."
 ---
 
 # Create Event Kit
 
-Turn an event concept into one reviewable folder with three source artifacts and one generated Luma-style planning preview.
+Turn an event concept into one reviewable folder with exactly three artifacts. When requested, also populate Luma's native create editor as an unpublished, transient mockup.
 
 ## 1. Frame the event
 
@@ -15,15 +15,14 @@ This step is complete when every participating company is named and the premise,
 
 ## 2. Build the three source artifacts
 
-Use the requested output path. Otherwise create a non-colliding event-slug folder in the current working directory. Its complete structure after rendering is:
+Use the requested output path. Otherwise create a non-colliding event-slug folder in the current working directory. Its complete structure is:
 
 ```text
 <event-slug>/
 ├── event-brief.md
 ├── luma-event-poster/
 │   └── <company-slug>-logo.<ext>
-├── socials-description.md
-└── luma-preview.html
+└── socials-description.md
 ```
 
 ### `event-brief.md`
@@ -66,28 +65,35 @@ Use this exact structure:
 
 Distinguish the broad theme from the event's specific point of view. In the social description, name the participating companies, explain why the discussion matters, and give the audience a concrete reason to attend. Add registration language only when a call to action or link is supplied; add hashtags or emoji only when requested or supported by the specified tone.
 
-This step is complete when the three source artifacts are ready to render and contain no drafts, manifests, source notes, hidden metadata, or internal placeholders.
+This step is complete when the three artifacts contain no drafts, manifests, source notes, hidden metadata, or internal placeholders.
 
-## 3. Render the Luma planning preview
+## 3. Populate an unpublished Luma mockup
 
-Create `luma-preview.html` from the three source artifacts by running this command from the Skill directory:
+Do this step only when the user asks for a Luma mockup or asks to populate Luma. Use the current in-app browser and open Luma's native create editor at `https://luma.com/create`. If Luma requires authentication, ask the user to sign in within that browser, then resume from the same create page.
 
-```bash
-python3 scripts/render_luma_preview.py <event-folder> \
-  --date "<supplied date or Date to be announced>" \
-  --time "<supplied time or Time to be announced>" \
-  --location "<supplied location or Location to be announced>"
-```
+Before entering other event content, set the event visibility to **Private** as a fail-safe. Then populate only supplied or source-grounded values:
 
-Pass `--presented-by`, one or more `--host`, `--registration-note`, `--cta`, `--theme-label`, or `--cover-image` only when the prompt or trusted source material supplies those details. Run `python3 scripts/render_luma_preview.py --help` for the full interface.
+- Use the H1 from `event-brief.md` as the title.
+- Use the brief's prose as the event description.
+- Enter date, time, timezone, location, hosts, ticketing, capacity, and registration settings only when supplied.
+- Upload a supplied final cover image when available. Do not treat the logo-only `luma-event-poster/` folder as a finished cover or invent a composite poster.
+- Choose a native Luma theme or tint only when it follows supplied creative direction. Otherwise retain the editor default.
 
-The renderer produces one self-contained responsive HTML file. It follows the current Luma event-page hierarchy: a square rounded cover and presenter context on the left; event title, date, location, registration card, and About Event copy on the right; and a single-column mobile layout. It embeds logo assets as data URLs and generates a CSS cover when no official cover is supplied. Do not remove the planning-preview badge or disclaimer, and do not represent the file as a published Luma page.
+Leave unsupplied fields untouched. If Luma pre-fills required date or time values, identify them as editor defaults in the handoff rather than treating them as event facts. Use Luma's live preview as the authoritative representation of the public event page; do not create a substitute HTML imitation.
 
-Never invent logistics. Use the renderer's explicit `to be announced` defaults for missing date, time, or location. Do not add working registration behavior: the button is a disabled visual preview until a real event is configured in Luma.
+### Mockup safety boundary
 
-When a local browser preview is available, inspect `luma-preview.html` at approximately 1280×800 and 390×844. Confirm that the cover is square, content does not clip or overflow, the mobile layout is one column, every logo is visible, and the title, About Event copy, and known logistics match the Markdown sources.
+Treat mockup mode as non-publishing work. Never click, press, or submit **Create Event**. Never call `POST /v1/events/create`, use a Luma API key, or call any mutating Luma endpoint in mockup mode. Luma's create API makes a real event and does not provide a draft state; private visibility is only a fail-safe and does not make API creation acceptable.
 
-This step is complete when `luma-preview.html` is self-contained, responsive, visually coherent at desktop and mobile sizes, and clearly labeled as a planning preview.
+Leave the populated create editor open for review. Capture desktop and mobile screenshots when the browser supports non-mutating viewport inspection. Confirm all of the following before calling the mockup complete:
+
+- The browser remains on Luma's create flow rather than an event URL.
+- No event ID, event URL, or confirmation of creation exists.
+- No create, update, publish, or ticket mutation was sent.
+- The title and description match the event-kit sources.
+- Every retained Luma default and missing input is named in the handoff.
+
+Publishing is a separate task. Require an explicit user request to create the real event before crossing this boundary.
 
 ## 4. Audit and deliver
 
@@ -97,8 +103,8 @@ Verify that each logo is non-empty, matches its file extension, and traces to an
 python3 scripts/validate_event_kit.py <event-folder>
 ```
 
-Fix every reported error. Then reread both Markdown files and the rendered preview for a consistent premise, company list, audience, and logistics; remove unsupported claims and inflated language. Preserve open questions as questions.
+Fix every reported error. Then reread both Markdown files for a consistent premise, company list, audience, and logistics; remove unsupported claims and inflated language. Preserve open questions as questions. If a Luma mockup was requested, inspect the live editor preview without submitting it and apply the safety checks above.
 
-Return the event-folder path, a one-sentence creative-direction summary, and each official logo source URL in chat so provenance stays outside the four-artifact package.
+Return the event-folder path, a one-sentence creative-direction summary, and each official logo source URL in chat so provenance stays outside the three-artifact package. Also report whether the Luma editor was populated, which fields remain unresolved, and that no event was created.
 
-This step is complete only when the validator passes, every claim is source-grounded, the desktop and mobile preview states have been checked when browser tooling is available, and every participating company has an official logo or an explicitly reported missing asset with usage requirements surfaced.
+This step is complete only when the validator passes, every claim is source-grounded, and every participating company has an official logo or an explicitly reported missing asset with usage requirements surfaced. If a Luma mockup was requested, it must also remain unpublished in the native create editor with no event ID or URL.
