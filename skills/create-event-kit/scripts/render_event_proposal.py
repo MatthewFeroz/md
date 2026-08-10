@@ -222,6 +222,10 @@ def main() -> int:
     parser.add_argument("--venue", default="To be confirmed")
     parser.add_argument("--audience", default="Audience to be confirmed.")
     parser.add_argument(
+        "--community",
+        help="Replace the audience footer with the community showcase",
+    )
+    parser.add_argument(
         "--outcome",
         default="A focused conversation that gives attendees a clearer way to act on the event thesis.",
     )
@@ -263,7 +267,8 @@ def main() -> int:
         "OVERVIEW_HTML": overview_html,
         "SPEAKER_HTML": render_speakers(args.speaker or [], args.company),
         "DISCUSSION_HTML": discussion_html,
-        "AUDIENCE": escape_text(args.audience),
+        "AUDIENCE_LABEL": "The Community" if args.community else "Audience",
+        "AUDIENCE": escape_text(args.community or args.audience),
         "OUTCOME": escape_text(args.outcome),
         "STATUS": escape_text(args.status),
         "PARTNER_GUIDE_HTML": render_partner_guide(

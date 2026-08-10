@@ -88,6 +88,8 @@ Before rendering, audit every visible string for company names. Include each nam
 
 Use only source-grounded content. Add named speakers and headshots only when supplied; label every unresolved speaker or logistics field as to be confirmed. Keep unresolved logistics in the default next-step statement. Verify that `event-proposal.pdf` is exactly one Letter page, render it to an image, and inspect the complete page for clipping, overlap, or unreadable text.
 
+Use `--community` when the event includes a participatory builder showcase or local-community contribution. It replaces the audience footer with a section labeled **The Community**; otherwise retain the audience footer.
+
 ## 4. Populate an unpublished Luma mockup
 
 Do this step only when the user asks for a Luma mockup or asks to populate Luma. Use the current in-app browser and open Luma's native create editor at `https://luma.com/create`. If Luma requires authentication, ask the user to sign in within that browser, then resume from the same create page.
