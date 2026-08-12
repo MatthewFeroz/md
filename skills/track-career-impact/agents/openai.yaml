@@ -1,0 +1,4 @@
+interface:
+  display_name: "Career Impact Tracker"
+  short_description: "Capture evidence-backed work for promotion reviews"
+  default_prompt: "Use $track-career-impact to record this work and draft a promotion-ready impact summary."
