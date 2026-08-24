@@ -1,0 +1,4 @@
+interface:
+  display_name: "DoorDash Deal Finder"
+  short_description: "Maximize food within a DoorDash budget"
+  default_prompt: "Use $find-doordash-deals to find tonight’s best DoorDash order under my $25 company credit and leave the winning cart ready for review."
