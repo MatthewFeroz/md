@@ -36,6 +36,8 @@ Options:
   --screen-device <id>   AVFoundation screen device (default: 2)
   --display-left <px>    Display's global top-left X coordinate (default: 0)
   --display-top <px>     Display's global top-left Y coordinate (default: 0)
+  --webgl                Keep Chrome's WebGL renderer enabled
+  --drive-demo           Send a fixed W/A/D driving sequence after Start
   --result <path>        Audit JSON path (default: beside output)
   --help                 Show this help
 `;
@@ -52,6 +54,8 @@ export function parseArgs(argv) {
     screenDevice: "2",
     displayLeft: 0,
     displayTop: 0,
+    webgl: false,
+    driveDemo: false,
   };
   const valueOptions = new Set([
     "--url",
@@ -71,6 +75,14 @@ export function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const option = argv[index];
     if (option === "--help") return { help: true };
+    if (option === "--webgl") {
+      values.webgl = true;
+      continue;
+    }
+    if (option === "--drive-demo") {
+      values.driveDemo = true;
+      continue;
+    }
     if (!valueOptions.has(option)) throw new Error(`Unknown option: ${option}`);
     const value = argv[index + 1];
     if (value == null) throw new Error(`Missing value for ${option}`);
@@ -380,6 +392,33 @@ export function actionPlan() {
   ];
 }
 
+function driveActionPlan() {
+  const keyEvent = (name, atSeconds, type, key, code, virtualKeyCode) => ({
+    name,
+    atSeconds,
+    cdpMethod: "Input.dispatchKeyEvent",
+    cdpParams: {
+      type,
+      key,
+      code,
+      windowsVirtualKeyCode: virtualKeyCode,
+      nativeVirtualKeyCode: virtualKeyCode,
+    },
+  });
+  return [
+    keyEvent("accelerate_down", 1.2, "keyDown", "w", "KeyW", 87),
+    keyEvent("steer_right_down", 3.0, "keyDown", "d", "KeyD", 68),
+    keyEvent("steer_right_up", 4.25, "keyUp", "d", "KeyD", 68),
+    keyEvent("steer_left_down", 5.5, "keyDown", "a", "KeyA", 65),
+    keyEvent("steer_left_up", 6.75, "keyUp", "a", "KeyA", 65),
+    keyEvent("steer_right_down_2", 8.0, "keyDown", "d", "KeyD", 68),
+    keyEvent("steer_right_up_2", 9.25, "keyUp", "d", "KeyD", 68),
+    keyEvent("steer_left_down_2", 10.5, "keyDown", "a", "KeyA", 65),
+    keyEvent("steer_left_up_2", 11.75, "keyUp", "a", "KeyA", 65),
+    keyEvent("accelerate_up", 12.5, "keyUp", "w", "KeyW", 87),
+  ];
+}
+
 async function terminate(process) {
   if (!process || process.exitCode != null) return;
   process.kill("SIGTERM");
@@ -434,18 +473,26 @@ async function sizeBrowserViewport(cdp, options) {
         `${metrics.innerWidth}x${metrics.innerHeight}`,
     );
   }
-  if (metrics.devicePixelRatio !== 1) {
+  if (!Number.isFinite(metrics.devicePixelRatio) || metrics.devicePixelRatio <= 0) {
     throw new Error(
-      `FFmpeg screen capture requires a 1x display; Chrome reported devicePixelRatio=${metrics.devicePixelRatio}`,
+      `Chrome reported an invalid devicePixelRatio: ${metrics.devicePixelRatio}`,
     );
   }
 
   const horizontalFrame = Math.max(0, metrics.outerWidth - metrics.innerWidth);
   const verticalFrame = Math.max(0, metrics.outerHeight - metrics.innerHeight);
+  const captureScale = metrics.devicePixelRatio;
+  const cropXCss = metrics.screenX - options.displayLeft + horizontalFrame / 2;
+  const cropYCss = metrics.screenY - options.displayTop + verticalFrame;
   return {
     ...metrics,
-    cropX: Math.round(metrics.screenX - options.displayLeft + horizontalFrame / 2),
-    cropY: Math.round(metrics.screenY - options.displayTop + verticalFrame),
+    captureScale,
+    cropXCss,
+    cropYCss,
+    cropX: Math.round(cropXCss * captureScale),
+    cropY: Math.round(cropYCss * captureScale),
+    captureWidth: Math.round(options.width * captureScale),
+    captureHeight: Math.round(options.height * captureScale),
   };
 }
 
@@ -486,10 +533,10 @@ export async function recordSite(options) {
   }
 
   const profile = mkdtempSync(join(tmpdir(), "merge-live-recording-"));
-  const chrome = spawn(
-    options.chromeBin,
-    [
-      "--disable-gpu",
+  const chromeArguments = [
+      ...(options.webgl
+        ? ["--enable-webgl", "--ignore-gpu-blocklist", "--enable-unsafe-swiftshader"]
+        : ["--disable-gpu"]),
       "--hide-scrollbars",
       "--allow-file-access-from-files",
       "--no-first-run",
@@ -499,7 +546,10 @@ export async function recordSite(options) {
       `--window-position=${options.displayLeft},${options.displayTop}`,
       `--window-size=${options.width},${options.height}`,
       `--app=${options.url}`,
-    ],
+    ];
+  const chrome = spawn(
+    options.chromeBin,
+    chromeArguments,
     { stdio: ["ignore", "ignore", "pipe"] },
   );
 
@@ -554,7 +604,8 @@ export async function recordSite(options) {
         "-t",
         String(options.duration),
         "-vf",
-        `crop=${options.width}:${options.height}:${viewport.cropX}:${viewport.cropY},format=yuv420p`,
+        `crop=${viewport.captureWidth}:${viewport.captureHeight}:${viewport.cropX}:${viewport.cropY},` +
+          `scale=${options.width}:${options.height}:flags=lanczos,format=yuv420p`,
         "-an",
         "-r",
         String(options.fps),
@@ -575,7 +626,11 @@ export async function recordSite(options) {
     ffmpeg.stderr.on("data", (chunk) => ffmpegErrors.push(chunk.toString()));
     const ffmpegClosed = once(ffmpeg, "close");
 
-    const actions = actionPlan();
+    const actions = options.driveDemo
+      ? [...actionPlan(), ...driveActionPlan()].sort(
+          (left, right) => left.atSeconds - right.atSeconds,
+        )
+      : actionPlan();
     const executed = [];
     const began = performance.now();
 
@@ -584,10 +639,12 @@ export async function recordSite(options) {
       for (const action of actions) {
         if (action.executed || elapsedSeconds < action.atSeconds) continue;
         action.executed = true;
-        const response = await cdp.send("Runtime.evaluate", {
-          expression: action.expression,
-          returnByValue: true,
-        });
+        const response = action.cdpMethod
+          ? await cdp.send(action.cdpMethod, action.cdpParams)
+          : await cdp.send("Runtime.evaluate", {
+              expression: action.expression,
+              returnByValue: true,
+            });
         executed.push({
           name: action.name,
           at_seconds: Number(elapsedSeconds.toFixed(3)),
@@ -648,6 +705,8 @@ export async function recordSite(options) {
       output: options.output,
       viewport: { width: options.width, height: options.height },
       screen_device: options.screenDevice,
+      webgl_capture: options.webgl,
+      drive_demo: options.driveDemo,
       browser_viewport: viewport,
       duration_seconds: options.duration,
       fps: options.fps,

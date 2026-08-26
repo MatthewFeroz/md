@@ -48,6 +48,10 @@ test -n "$MERGE_GATEWAY_API_KEY"
 not modify the user's global Pi settings and stores only the environment-variable reference, not
 the API key. Set `MERGE_GATEWAY_BASE_URL` only when using a non-default Gateway URL.
 
+Pass `--exact-prompt` when the user supplies a complete execution prompt or requests a framework,
+dependency, or asset policy that conflicts with the runner's default self-contained build
+contract. This sends the prompt file verbatim while preserving the one-run audit.
+
 Before a full build, send a bounded tool-call probe through the same Gateway endpoint and model.
 Apply any verified vendor controls with `--sampling-params-json`. For example, Qwen models that
 default to thinking mode may require:
@@ -165,6 +169,10 @@ node "<skill-dir>/scripts/record_site.mjs" \
   --display-left "<global-x>" \
   --display-top "<global-y>"
 ```
+
+Add `--webgl` to both commands for Three.js or other WebGL demos. When both demos expose W/A/D
+or arrow-key driving controls, also add `--drive-demo`. The recorder applies the same fixed
+driving sequence to each page after activating Start.
 
 Require both recording audits to report FFmpeg as the real-time capture source, one continuous
 page session, 60 fps, at least two unique motion samples, completed scroll traces, and a non-empty

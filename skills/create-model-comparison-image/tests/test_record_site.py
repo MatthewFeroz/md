@@ -31,6 +31,8 @@ class LiveSiteRecorderTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("one continuous live Chrome page session", result.stdout)
         self.assertIn("FFmpeg's native screen capture", result.stdout)
+        self.assertIn("--webgl", result.stdout)
+        self.assertIn("--drive-demo", result.stdout)
 
     def test_ffmpeg_is_the_live_capture_source(self) -> None:
         source = SCRIPT.read_text(encoding="utf-8")
@@ -62,6 +64,31 @@ class LiveSiteRecorderTests(unittest.TestCase):
         self.assertIn('name: "activate_replay_control"', source)
         self.assertNotIn('name: "select_alternate_mission"', source)
         self.assertNotIn('name: "open_reservation"', source)
+
+    def test_drive_demo_uses_a_fixed_cdp_keyboard_sequence(self) -> None:
+        source = SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn('cdpMethod: "Input.dispatchKeyEvent"', source)
+        self.assertIn('keyEvent("accelerate_down"', source)
+        self.assertIn('keyEvent("accelerate_up"', source)
+        self.assertIn('keyEvent("steer_right_down"', source)
+        self.assertIn('keyEvent("steer_left_down"', source)
+        self.assertIn("drive_demo: options.driveDemo", source)
+
+    def test_webgl_capture_keeps_the_browser_renderer_enabled(self) -> None:
+        source = SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn('"--enable-webgl"', source)
+        self.assertIn('"--ignore-gpu-blocklist"', source)
+        self.assertIn('webgl_capture: options.webgl', source)
+
+    def test_retina_capture_scales_physical_pixels_to_the_target_viewport(self) -> None:
+        source = SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn("captureScale = metrics.devicePixelRatio", source)
+        self.assertIn("options.width * captureScale", source)
+        self.assertIn("options.height * captureScale", source)
+        self.assertIn("flags=lanczos", source)
 
     def test_skill_routes_raw_video_capture_through_live_recorder(self) -> None:
         instructions = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")

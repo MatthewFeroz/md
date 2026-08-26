@@ -36,6 +36,7 @@ class PiRunnerTests(unittest.TestCase):
             "prompt_file": root / "brief.txt",
             "timeout_seconds": 30,
             "pi_bin": "pi",
+            "exact_prompt": False,
             "base_url": None,
             "sampling_params_json": None,
         }
@@ -119,6 +120,18 @@ class PiRunnerTests(unittest.TestCase):
         self.assertNotIn("--continue", command)
         self.assertNotIn("--resume", command)
         self.assertNotIn("--fork", command)
+
+    def test_exact_prompt_does_not_append_the_default_build_contract(self) -> None:
+        brief = "Build a Three.js kart demo with normal coding tools."
+
+        self.assertEqual(
+            self.runner.effective_prompt(brief, exact=True),
+            brief,
+        )
+        self.assertIn(
+            self.runner.FINAL_INSTRUCTION.strip(),
+            self.runner.effective_prompt(brief),
+        )
 
     def test_missing_gateway_key_fails_before_pi_runs(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

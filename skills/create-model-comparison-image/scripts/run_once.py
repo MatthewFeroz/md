@@ -41,6 +41,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout-seconds", type=int, default=1800)
     parser.add_argument("--pi-bin", default="pi")
     parser.add_argument(
+        "--exact-prompt",
+        action="store_true",
+        help="Send the prompt file verbatim without appending the default build contract.",
+    )
+    parser.add_argument(
         "--sampling-params-json",
         default=None,
         help=(
@@ -69,8 +74,11 @@ def gateway_model_id(model: str) -> str:
     return model
 
 
-def effective_prompt(brief: str) -> str:
-    return f"{brief.strip()}\n\n{FINAL_INSTRUCTION.strip()}"
+def effective_prompt(brief: str, *, exact: bool = False) -> str:
+    brief = brief.strip()
+    if exact:
+        return brief
+    return f"{brief}\n\n{FINAL_INSTRUCTION.strip()}"
 
 
 def parse_sampling_params(raw: str | None) -> dict[str, Any] | None:
@@ -212,7 +220,10 @@ def run_model(args: argparse.Namespace) -> int:
         write_result(result_file, result)
         return 1
 
-    prompt = effective_prompt(prompt_file.read_text(encoding="utf-8"))
+    prompt = effective_prompt(
+        prompt_file.read_text(encoding="utf-8"),
+        exact=args.exact_prompt,
+    )
     (workspace / "effective-prompt.txt").write_text(prompt + "\n", encoding="utf-8")
     base_url = (
         args.base_url
