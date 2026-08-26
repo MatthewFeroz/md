@@ -1,0 +1,274 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  Side-by-side model generation comparison — 1920×1080.
+  Pass 1: N=2 columns. Header = [logo mark] [model name]; below = that model's
+  generation screenshot. Light canvas with strong crosshair dividers.
+-->
+<style>
+  @font-face {
+    font-family: "FH Oscar Pro";
+    font-weight: 600; font-style: normal;
+    src: url("FHOscarPro-SemiBold.otf") format("opentype");
+  }
+  @font-face {
+    font-family: "FH Oscar Pro";
+    font-weight: 300; font-style: normal;
+    src: url("FHOscarPro-Light.otf") format("opentype");
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #000000;
+    --divider-v: #D9D9D9;
+    --divider-h: #DDDDDC;
+    --divider-w: 2px;
+    --header-h: 187px;
+  }
+  html, body { background: #FAF8F5; }
+  body {
+    width: 1920px; height: 1080px;
+    position: relative; overflow: hidden;
+    font-family: "FH Oscar Pro", -apple-system, sans-serif;
+    color: var(--ink);
+  }
+
+  /* Exact crosshair geometry from full Figma frame 3:2614. */
+  .h-line { position: absolute; left: 0; right: 0; height: var(--divider-w); background: var(--divider-h); z-index: 4; }
+  .h-line.top { top: var(--header-h); }
+  .v-line { position: absolute; top: 0; left: 959px; width: var(--divider-w); height: 1095px; background: var(--divider-v); z-index: 4; }
+  .crosshair-dot {
+    position: absolute; left: 940px; top: 168px;
+    width: 40px; height: 40px;
+    background: #FAF8F5;
+    border: 2px solid #D9D9D9;
+    border-radius: 100px;
+    z-index: 5;
+  }
+
+  .columns {
+    position: relative; z-index: 3;
+    display: flex; width: 100%; height: 100%;
+  }
+  .col {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .head {
+    height: var(--header-h);
+    display: flex; align-items: center; justify-content: center; gap: 30px;
+  }
+  .logo {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink);
+  }
+  .col:first-child .logo { width: 108px; height: 108px; }
+  .col:last-child .logo { width: 96px; height: 96px; }
+  .logo svg, .logo img { display: block; }
+  .name {
+    font-weight: 600; font-size: 96px;
+    letter-spacing: -0.02em; line-height: 1; white-space: nowrap;
+  }
+  .shot-wrap {
+    flex: 1;
+    position: relative; width: 100%;
+  }
+  .shot {
+    position: absolute; top: 90px;
+    height: 615px;
+    object-fit: cover;
+    display: block;
+    box-shadow:
+      0 12px 24px rgba(0, 0, 0, 0.12),
+      0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+  .col:first-child .shot {
+    left: 52.7010498046875px;
+    width: 854.5978393554688px;
+    border-radius: 8.152px;
+  }
+  .col:last-child .shot {
+    left: 53.369140625px;
+    width: 853.2615966796875px;
+    border-radius: 8.146px;
+  }
+
+  /* Exact export geometry from Figma file 68puDwQfM9TSOGY0xve1KA, node 3:2660. */
+  .merge-badge {
+    position: absolute; left: 770px; top: 930.5px;
+    width: 378.0297546386719px; height: 111px;
+    background: #FAF8F5;
+    border: 3px solid #D9D9D9;
+    border-radius: 97.5px;
+    z-index: 6;
+  }
+  .merge-badge-lockup {
+    position: absolute;
+    left: 50.99992370605469px; top: 27px;
+    width: 276.0297546386719px; height: 57px;
+  }
+  .merge-badge-mark {
+    position: absolute; left: 0; top: 0;
+    width: 46.18862533569336px; height: 57px;
+    display: block;
+  }
+  .merge-badge-wordmark {
+    position: absolute;
+    left: 75.57760620117188px; top: 9.780256271362305px;
+    width: 200.4523162841797px; height: 37.41017532348633px;
+    display: block;
+  }
+</style>
+</head>
+<body>
+  <div class="h-line top"></div>
+  <div class="v-line"></div>
+  <div class="crosshair-dot" data-node-id="3:2659"></div>
+
+  <div class="columns">
+    <div class="col">
+      <div class="head">
+        <span class="logo" data-src="logo-a.svg"></span>
+        <div class="name">{{MODEL_A}}</div>
+      </div>
+      <div class="shot-wrap"><img class="shot" src="shot-a.png"></div>
+    </div>
+    <div class="col">
+      <div class="head">
+        <span class="logo" data-src="logo-b.svg"></span>
+        <div class="name">{{MODEL_B}}</div>
+      </div>
+      <div class="shot-wrap"><img class="shot" src="shot-b.png"></div>
+    </div>
+  </div>
+
+  <div class="merge-badge" data-node-id="3:2660" aria-label="MERGE">
+    <div class="merge-badge-lockup" data-node-id="3:2661">
+      <img class="merge-badge-mark" src="merge-badge/merge-mark.svg" alt="">
+      <img class="merge-badge-wordmark" src="merge-badge/merge-wordmark.svg" alt="">
+    </div>
+  </div>
+
+<script>
+/* Logo normalization, adapted from the vertical template: inline the mark,
+   measure tight ink bounds, fit inside its side-specific square (contain). */
+(async function () {
+  function fit(w, h, box) {
+    const s = box / Math.max(w, h);
+    return { w: w * s, h: h * s };
+  }
+
+  function warnIfWide(slot, src, w, h) {
+    const ratio = w / h;
+    if (ratio > 2.6) {
+      slot.dataset.warn = 'wordmark-wide logo (' + ratio.toFixed(2) + ':1): ' + src;
+    }
+  }
+
+  async function placeSvg(slot, src) {
+    const txt = await (await fetch(src)).text();
+    slot.innerHTML = txt;
+    const svg = slot.querySelector('svg');
+    svg.removeAttribute('width'); svg.removeAttribute('height');
+    svg.style.display = 'block';
+    const bb = svg.getBBox();
+    if (!bb.width || !bb.height) throw new Error('SVG has no visible bounds');
+    warnIfWide(slot, src, bb.width, bb.height);
+    svg.setAttribute('viewBox', bb.x + ' ' + bb.y + ' ' + bb.width + ' ' + bb.height);
+    const s = fit(bb.width, bb.height, slot.getBoundingClientRect().width);
+    svg.style.width = s.w + 'px'; svg.style.height = s.h + 'px';
+  }
+
+  async function placeRaster(slot, src) {
+    const blob = await (await fetch(src)).blob();
+    const bmp = await createImageBitmap(blob);
+    const c = document.createElement('canvas');
+    c.width = bmp.width; c.height = bmp.height;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(bmp, 0, 0);
+    const d = ctx.getImageData(0, 0, c.width, c.height).data;
+    let hasAlpha = false;
+    for (let i = 3; i < d.length; i += 4) if (d[i] < 250) { hasAlpha = true; break; }
+    const isInk = (i) => hasAlpha ? d[i + 3] > 8
+      : (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245);
+    let minX = c.width, minY = c.height, maxX = -1, maxY = -1;
+    for (let y = 0; y < c.height; y++)
+      for (let x = 0; x < c.width; x++)
+        if (isInk((y * c.width + x) * 4)) {
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+        }
+    if (maxX < 0 || maxY < 0) throw new Error('image has no visible pixels');
+    const w = maxX - minX + 1, h = maxY - minY + 1;
+    warnIfWide(slot, src, w, h);
+    const out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    out.getContext('2d').drawImage(bmp, minX, minY, w, h, 0, 0, w, h);
+    const img = new Image();
+    img.src = out.toDataURL();
+    const s = fit(w, h, slot.getBoundingClientRect().width);
+    img.style.width = s.w + 'px'; img.style.height = s.h + 'px';
+    img.style.display = 'block';
+    slot.appendChild(img);
+  }
+
+  for (const slot of document.querySelectorAll('.logo')) {
+    const src = slot.dataset.src;
+    try {
+      if (/\.svg(\?|$)/i.test(src)) await placeSvg(slot, src);
+      else await placeRaster(slot, src);
+    } catch (e) {
+      slot.dataset.warn = 'failed to load ' + src + ': ' + e.message;
+    }
+  }
+  const badge = document.querySelector('.merge-badge');
+  for (const image of badge.querySelectorAll('img')) {
+    if (!image.complete) {
+      await new Promise(resolve => {
+        image.addEventListener('load', resolve, { once: true });
+        image.addEventListener('error', resolve, { once: true });
+      });
+    }
+    if (!image.naturalWidth) badge.dataset.warn = 'failed to load ' + image.src;
+  }
+  // document.fonts.ready resolves whether or not the @font-face actually
+  // loaded, so ask for each face explicitly. The renderer refuses to composite
+  // unless this reports ok — a fallback face would silently ship the wrong
+  // typeface and wrong header measurements.
+  let fontStatus = 'ok';
+  try {
+    const faces = await Promise.all([
+      document.fonts.load('600 96px "FH Oscar Pro"'),
+      document.fonts.load('300 96px "FH Oscar Pro"'),
+    ]);
+    await document.fonts.ready;
+    const missing = faces.filter(loaded => loaded.length === 0).length;
+    if (missing) fontStatus = 'missing ' + missing + ' of 2 FH Oscar Pro faces';
+  } catch (e) {
+    fontStatus = 'error: ' + e.message;
+  }
+  document.body.dataset.fonts = fontStatus;
+
+  // Fit each header independently inside its Figma lockup bound.
+  const names = [...document.querySelectorAll('.name')];
+  const MAX_LOCKUPS = [683, 801];
+  for (const [index, name] of names.entries()) {
+    const logoBox = name.previousElementSibling.getBoundingClientRect().width;
+    const fixed = logoBox + 30;
+    const maxLockup = MAX_LOCKUPS[index];
+    const width = name.getBoundingClientRect().width;
+    if (fixed + width > maxLockup) {
+      const size = Math.floor(96 * (maxLockup - fixed) / width * 100) / 100;
+      name.style.fontSize = size + 'px';
+    }
+  }
+  for (const name of names) {
+    name.dataset.width = name.getBoundingClientRect().width.toFixed(2);
+    name.dataset.size = parseFloat(getComputedStyle(name).fontSize).toFixed(2);
+  }
+  document.body.dataset.ready = '1';
+})();
+</script>
+</body>
+</html>
