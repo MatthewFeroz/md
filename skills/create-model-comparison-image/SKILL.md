@@ -16,7 +16,7 @@ Run the content comparison directly through Pi.
   to ask the model again.
 - Capture both sites only after Pi exits. Rendering and recording must not call a model.
 - Render the still with the locked 1920x1080 Figma geometry in `template.html`.
-- When motion is requested, record each live site in one continuous page session.
+- When motion is requested, let FFmpeg record each live Chrome session directly.
 - The only publishable video is the combined comparison MP4. Keep the two raw site recordings
   as audit artifacts.
 
@@ -47,6 +47,17 @@ test -n "$MERGE_GATEWAY_API_KEY"
 `scripts/run_once.py` creates an isolated Pi configuration inside each model workspace. It does
 not modify the user's global Pi settings and stores only the environment-variable reference, not
 the API key. Set `MERGE_GATEWAY_BASE_URL` only when using a non-default Gateway URL.
+
+Before a full build, send a bounded tool-call probe through the same Gateway endpoint and model.
+Apply any verified vendor controls with `--sampling-params-json`. For example, Qwen models that
+default to thinking mode may require:
+
+```sh
+--sampling-params-json '{"provider_options":{"qwen":{"thinking":{"type":"disabled"}}}}'
+```
+
+Use only controls that the exact model passes in the probe. A plain text health check does not
+verify Pi's tool path.
 
 Create a new output folder with `site-a/` and `site-b/`. Save the shared brief once as
 `build-prompt.txt`. Unless the user supplies custom logos, stage both provider symbols:
@@ -129,21 +140,35 @@ badge geometry. Do not alter either model's website to improve the comparison.
 
 ## Render the comparison video
 
-When motion is requested, record each site in one continuous live Chrome session:
+When motion is requested, record each site in one continuous live Chrome session. Use FFmpeg's
+native screen-capture input as the recorder; do not build a video from screenshots or buffered
+browser images. On macOS, list AVFoundation devices and select a dedicated display:
+
+```sh
+ffmpeg -hide_banner -f avfoundation -list_devices true -i ""
+```
+
+Position Chrome on that display and pass its AVFoundation device and global top-left coordinates:
 
 ```sh
 node "<skill-dir>/scripts/record_site.mjs" \
   --url "file://<output-folder>/site-a/index.html" \
-  --output "<output-folder>/<model-a-stem>-raw.mp4"
+  --output "<output-folder>/<model-a-stem>-raw.mp4" \
+  --screen-device "<avfoundation-device>" \
+  --display-left "<global-x>" \
+  --display-top "<global-y>"
 
 node "<skill-dir>/scripts/record_site.mjs" \
   --url "file://<output-folder>/site-b/index.html" \
-  --output "<output-folder>/<model-b-stem>-raw.mp4"
+  --output "<output-folder>/<model-b-stem>-raw.mp4" \
+  --screen-device "<avfoundation-device>" \
+  --display-left "<global-x>" \
+  --display-top "<global-y>"
 ```
 
-Require both recording audits to report a live Chrome DevTools screencast, one continuous page
-session, 60 fps, at least two unique frames, completed scroll traces, and a non-empty action list.
-The raw recordings are internal inputs.
+Require both recording audits to report FFmpeg as the real-time capture source, one continuous
+page session, 60 fps, at least two unique motion samples, completed scroll traces, and a non-empty
+action list. The raw recordings are internal inputs.
 
 Render the publishable two-panel video over the locked comparison image:
 
@@ -174,7 +199,7 @@ screenshots, raw recordings, and render audits in the output folder for provenan
 - `scripts/run_once.py`: one prompt, one fresh Pi run, isolated Merge Gateway config
 - `scripts/stage_provider_logos.py`: validate and stage provider symbols
 - `scripts/render_comparison.py`: render the locked PNG, 2x PNG, and SVG
-- `scripts/record_site.mjs`: record each live site in one continuous Chrome session
+- `scripts/record_site.mjs`: record each live Chrome session directly with FFmpeg
 - `scripts/render_video.py`: composite both recordings into the locked comparison frame
 - `template.html`: locked 1920x1080 comparison layout
 - `assets/provider-logos/`: provider symbol catalog and manifest

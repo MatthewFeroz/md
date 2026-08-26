@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { createHash } from "node:crypto";
 import { once } from "node:events";
 import {
   existsSync,
@@ -11,7 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { extname, join, parse, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 const DEFAULT_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const DEFAULT_DURATION = 14;
@@ -25,7 +24,7 @@ const sleep = (milliseconds) =>
 function usage() {
   return `Usage: node record_site.mjs --url <url> --output <video.mp4> [options]
 
-Record one continuous live Chrome page session through the DevTools screencast API.
+Record one continuous live Chrome page session with FFmpeg's native screen capture.
 
 Options:
   --duration <seconds>   Recording duration (default: ${DEFAULT_DURATION})
@@ -34,6 +33,9 @@ Options:
   --height <pixels>      Browser viewport height (default: ${DEFAULT_HEIGHT})
   --chrome-bin <path>    Chrome executable
   --ffmpeg-bin <path>    FFmpeg executable or command (default: ffmpeg)
+  --screen-device <id>   AVFoundation screen device (default: 2)
+  --display-left <px>    Display's global top-left X coordinate (default: 0)
+  --display-top <px>     Display's global top-left Y coordinate (default: 0)
   --result <path>        Audit JSON path (default: beside output)
   --help                 Show this help
 `;
@@ -47,6 +49,9 @@ export function parseArgs(argv) {
     height: DEFAULT_HEIGHT,
     chromeBin: DEFAULT_CHROME,
     ffmpegBin: "ffmpeg",
+    screenDevice: "2",
+    displayLeft: 0,
+    displayTop: 0,
   };
   const valueOptions = new Set([
     "--url",
@@ -57,6 +62,9 @@ export function parseArgs(argv) {
     "--height",
     "--chrome-bin",
     "--ffmpeg-bin",
+    "--screen-device",
+    "--display-left",
+    "--display-top",
     "--result",
   ]);
 
@@ -76,6 +84,9 @@ export function parseArgs(argv) {
       "--height": "height",
       "--chrome-bin": "chromeBin",
       "--ffmpeg-bin": "ffmpegBin",
+      "--screen-device": "screenDevice",
+      "--display-left": "displayLeft",
+      "--display-top": "displayTop",
       "--result": "result",
     }[option];
     values[key] = value;
@@ -92,6 +103,13 @@ export function parseArgs(argv) {
   values.fps = Math.round(values.fps);
   values.width = Math.round(values.width);
   values.height = Math.round(values.height);
+  for (const key of ["displayLeft", "displayTop"]) {
+    values[key] = Number(values[key]);
+    if (!Number.isFinite(values[key])) {
+      throw new Error(`--${key === "displayLeft" ? "display-left" : "display-top"} must be a number`);
+    }
+    values[key] = Math.round(values[key]);
+  }
   values.output = resolve(values.output);
   const outputParts = parse(values.output);
   values.result = values.result
@@ -298,81 +316,68 @@ function smoothScrollExpression(name, targetExpression, durationMs) {
 export function actionPlan() {
   return [
     {
-      name: "scroll_to_manifest",
-      atSeconds: 1.5,
+      name: "activate_primary_control",
+      atSeconds: 0.75,
+      expression: `(() => {
+        const controls = [...document.querySelectorAll(
+          'button, [role="button"], input[type="button"], input[type="submit"], a[href]'
+        )].filter((element) => {
+          const style = getComputedStyle(element);
+          return element.getClientRects().length > 0 &&
+            style.visibility !== 'hidden' &&
+            style.display !== 'none' &&
+            !element.disabled;
+        });
+        const label = (element) => String(
+          element.innerText || element.value || element.getAttribute('aria-label') ||
+          element.getAttribute('title') || ''
+        ).trim();
+        const score = (element) => {
+          const text = label(element).toLowerCase();
+          if (/restart|reset|stop|pause|close|cancel/.test(text)) return -1;
+          if (/^start\s+(race|game|demo)$/.test(text)) return 100;
+          if (/^(start|play|run|launch|begin)$/.test(text)) return 90;
+          if (/start|play|run|launch|begin|race/.test(text)) return 60;
+          return 0;
+        };
+        const ranked = controls
+          .map((element) => ({ element, score: score(element) }))
+          .filter((entry) => entry.score > 0)
+          .sort((left, right) => right.score - left.score);
+        const selected = ranked[0]?.element;
+        selected?.click();
+        return selected ? label(selected) : null;
+      })()`,
+    },
+    {
+      name: "scroll_to_content",
+      atSeconds: 4.5,
       expression: smoothScrollExpression(
-        "scroll_to_manifest",
-        `(() => {
-          const target = document.querySelector('#manifest, .manifest, .manifest-section, [data-flights]');
-          return target ? target.getBoundingClientRect().top + window.scrollY - 56 : document.body.scrollHeight * 0.45;
-        })()`,
+        "scroll_to_content",
+        "document.body.scrollHeight * 0.45",
         2400,
       ),
     },
     {
-      name: "select_alternate_mission",
-      atSeconds: 4.5,
-      expression: `(() => {
-        const options = [...document.querySelectorAll('[data-mission], .mission-button')]
-          .filter((element) => element.getClientRects().length > 0);
-        (options[1] || options[0])?.click();
-        return options.length;
-      })()`,
+      name: "return_to_top",
+      atSeconds: 8.0,
+      expression: smoothScrollExpression("return_to_top", "0", 2200),
     },
     {
-      name: "filter_manifest",
-      atSeconds: 5.5,
+      name: "activate_replay_control",
+      atSeconds: 12.25,
       expression: `(() => {
-        const filter = document.querySelector(
-          'button[data-filter="open"], button[data-filter="scheduled"], button[data-filter="upcoming"]'
-        );
-        filter?.click();
-        return Boolean(filter);
-      })()`,
-    },
-    {
-      name: "return_to_hero",
-      atSeconds: 6.4,
-      expression: smoothScrollExpression("return_to_hero", "0", 2200),
-    },
-    {
-      name: "open_reservation",
-      atSeconds: 9.3,
-      expression: `(() => {
-        const trigger = document.querySelector(
-          '.hero-actions [data-open-reserve], .hero-actions .open-reserve, [data-open-reserve], .open-reserve'
-        );
-        trigger?.click();
-        return Boolean(trigger);
-      })()`,
-    },
-    {
-      name: "show_validation",
-      atSeconds: 10.7,
-      expression: `(() => {
-        const submit = document.querySelector('dialog[open] form button[type="submit"]');
-        submit?.click();
-        return Boolean(submit);
-      })()`,
-    },
-    {
-      name: "close_reservation",
-      atSeconds: 12.4,
-      expression: `(() => {
-        const close = document.querySelector(
-          'dialog[open] .dialog-close, dialog[open] [data-close-reserve]'
-        );
-        close?.click();
-        return Boolean(close);
+        const controls = [...document.querySelectorAll('button, [role="button"], input[type="button"]')]
+          .filter((element) => element.getClientRects().length > 0 && !element.disabled);
+        const label = (element) => String(
+          element.innerText || element.value || element.getAttribute('aria-label') || ''
+        ).trim();
+        const replay = controls.find((element) => /restart|again|replay/i.test(label(element)));
+        replay?.click();
+        return replay ? label(replay) : null;
       })()`,
     },
   ];
-}
-
-async function waitForFirstFrame(frameState, timeoutMs = 10000) {
-  const deadline = Date.now() + timeoutMs;
-  while (!frameState.latest && Date.now() < deadline) await sleep(25);
-  if (!frameState.latest) throw new Error("Chrome did not emit a screencast frame");
 }
 
 async function terminate(process) {
@@ -380,6 +385,96 @@ async function terminate(process) {
   process.kill("SIGTERM");
   await Promise.race([once(process, "exit"), sleep(3000)]);
   if (process.exitCode == null) process.kill("SIGKILL");
+}
+
+async function evaluateValue(cdp, expression) {
+  const response = await cdp.send("Runtime.evaluate", {
+    expression,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  return response.result?.value;
+}
+
+async function sizeBrowserViewport(cdp, options) {
+  const { windowId } = await cdp.send("Browser.getWindowForTarget");
+  const setBounds = async (width, height) => {
+    await cdp.send("Browser.setWindowBounds", {
+      windowId,
+      bounds: {
+        left: options.displayLeft,
+        top: options.displayTop,
+        width,
+        height,
+        windowState: "normal",
+      },
+    });
+    await sleep(250);
+  };
+  const readMetrics = () => evaluateValue(cdp, `(() => ({
+    screenX: window.screenX,
+    screenY: window.screenY,
+    outerWidth: window.outerWidth,
+    outerHeight: window.outerHeight,
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+    devicePixelRatio: window.devicePixelRatio,
+  }))()`);
+
+  await setBounds(options.width, options.height);
+  let metrics = await readMetrics();
+  const frameWidth = Math.max(0, metrics.outerWidth - metrics.innerWidth);
+  const frameHeight = Math.max(0, metrics.outerHeight - metrics.innerHeight);
+  await setBounds(options.width + frameWidth, options.height + frameHeight);
+  metrics = await readMetrics();
+
+  if (metrics.innerWidth !== options.width || metrics.innerHeight !== options.height) {
+    throw new Error(
+      `Could not size Chrome viewport to ${options.width}x${options.height}; got ` +
+        `${metrics.innerWidth}x${metrics.innerHeight}`,
+    );
+  }
+  if (metrics.devicePixelRatio !== 1) {
+    throw new Error(
+      `FFmpeg screen capture requires a 1x display; Chrome reported devicePixelRatio=${metrics.devicePixelRatio}`,
+    );
+  }
+
+  const horizontalFrame = Math.max(0, metrics.outerWidth - metrics.innerWidth);
+  const verticalFrame = Math.max(0, metrics.outerHeight - metrics.innerHeight);
+  return {
+    ...metrics,
+    cropX: Math.round(metrics.screenX - options.displayLeft + horizontalFrame / 2),
+    cropY: Math.round(metrics.screenY - options.displayTop + verticalFrame),
+  };
+}
+
+function sampleMotion(ffmpegBin, videoPath) {
+  const probe = spawnSync(
+    ffmpegBin,
+    [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-i",
+      videoPath,
+      "-vf",
+      "fps=2,scale=160:-1",
+      "-f",
+      "framemd5",
+      "-",
+    ],
+    { encoding: "utf8" },
+  );
+  if (probe.status !== 0) {
+    throw new Error(`Could not audit recorded motion: ${probe.stderr.slice(-2000)}`);
+  }
+  const hashes = probe.stdout
+    .split("\n")
+    .filter((line) => line && !line.startsWith("#"))
+    .map((line) => line.split(",").at(-1)?.trim())
+    .filter(Boolean);
+  return { samples: hashes.length, uniqueSamples: new Set(hashes).size };
 }
 
 export async function recordSite(options) {
@@ -394,14 +489,16 @@ export async function recordSite(options) {
   const chrome = spawn(
     options.chromeBin,
     [
-      "--headless=new",
       "--disable-gpu",
       "--hide-scrollbars",
       "--allow-file-access-from-files",
+      "--no-first-run",
+      "--no-default-browser-check",
       "--remote-debugging-port=0",
       `--user-data-dir=${profile}`,
+      `--window-position=${options.displayLeft},${options.displayTop}`,
       `--window-size=${options.width},${options.height}`,
-      "about:blank",
+      `--app=${options.url}`,
     ],
     { stdio: ["ignore", "ignore", "pipe"] },
   );
@@ -417,14 +514,6 @@ export async function recordSite(options) {
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
     await cdp.send("Page.bringToFront");
-    await cdp.send("Emulation.setDeviceMetricsOverride", {
-      width: options.width,
-      height: options.height,
-      deviceScaleFactor: 1,
-      mobile: false,
-      screenWidth: options.width,
-      screenHeight: options.height,
-    });
     const loaded = cdp.waitFor("Page.loadEventFired");
     await cdp.send("Page.navigate", { url: options.url });
     await loaded;
@@ -434,41 +523,61 @@ export async function recordSite(options) {
       returnByValue: true,
     });
     await sleep(250);
+    const viewport = await sizeBrowserViewport(cdp, options);
+    await cdp.send("Page.bringToFront");
 
-    const frameState = {
-      latest: null,
-      received: 0,
-      uniqueHashes: new Set(),
-      captureBegan: null,
-      capturedFrames: [],
-    };
-    const removeFrameHandler = cdp.on("Page.screencastFrame", (frame) => {
-      const payload = Buffer.from(frame.data, "base64");
-      frameState.latest = payload;
-      frameState.received += 1;
-      frameState.uniqueHashes.add(createHash("sha256").update(payload).digest("hex"));
-      if (frameState.captureBegan != null) {
-        frameState.capturedFrames.push({
-          atSeconds: (performance.now() - frameState.captureBegan) / 1000,
-          payload,
-        });
-      }
-      cdp.send("Page.screencastFrameAck", { sessionId: frame.sessionId }).catch(() => {});
-    });
-    await cdp.send("Page.startScreencast", {
-      format: "jpeg",
-      quality: 92,
-      maxWidth: options.width,
-      maxHeight: options.height,
-      everyNthFrame: 1,
-    });
-    await waitForFirstFrame(frameState);
+    if (viewport.cropX < 0 || viewport.cropY < 0) {
+      throw new Error(
+        `Chrome content lies outside the selected display: crop ${viewport.cropX},${viewport.cropY}`,
+      );
+    }
+
+    ffmpeg = spawn(
+      options.ffmpegBin,
+      [
+        "-hide_banner",
+        "-loglevel",
+        "warning",
+        "-y",
+        "-thread_queue_size",
+        "512",
+        "-f",
+        "avfoundation",
+        "-pixel_format",
+        "nv12",
+        "-framerate",
+        String(options.fps),
+        "-capture_cursor",
+        "0",
+        "-i",
+        `${options.screenDevice}:none`,
+        "-t",
+        String(options.duration),
+        "-vf",
+        `crop=${options.width}:${options.height}:${viewport.cropX}:${viewport.cropY},format=yuv420p`,
+        "-an",
+        "-r",
+        String(options.fps),
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        options.output,
+      ],
+      { stdio: ["ignore", "ignore", "pipe"] },
+    );
+    ffmpeg.stderr.on("data", (chunk) => ffmpegErrors.push(chunk.toString()));
+    const ffmpegClosed = once(ffmpeg, "close");
 
     const actions = actionPlan();
     const executed = [];
     const began = performance.now();
-    frameState.captureBegan = began;
-    frameState.capturedFrames.push({ atSeconds: 0, payload: frameState.latest });
 
     while (true) {
       const elapsedSeconds = (performance.now() - began) / 1000;
@@ -485,13 +594,14 @@ export async function recordSite(options) {
           page_result: response.result?.value ?? null,
         });
       }
+      if (ffmpeg.exitCode != null && elapsedSeconds < options.duration - 0.25) {
+        throw new Error(
+          `FFmpeg stopped before capture completed: ${ffmpegErrors.join("").slice(-4000)}`,
+        );
+      }
       if (elapsedSeconds >= options.duration) break;
       await sleep(8);
     }
-
-    frameState.captureBegan = null;
-    await cdp.send("Page.stopScreencast");
-    removeFrameHandler();
 
     const scrollTraceResponse = await cdp.send("Runtime.evaluate", {
       expression: `(() => (window.__mergeScrollTraces || []).map((trace) => {
@@ -518,77 +628,31 @@ export async function recordSite(options) {
     });
     const scrollTraces = scrollTraceResponse.result?.value ?? [];
 
-    ffmpeg = spawn(
-      options.ffmpegBin,
-      [
-        "-y",
-        "-f",
-        "image2pipe",
-        "-framerate",
-        String(options.fps),
-        "-vcodec",
-        "mjpeg",
-        "-i",
-        "pipe:0",
-        "-vf",
-        `scale=${options.width}:${options.height}:flags=lanczos,format=yuv420p`,
-        "-an",
-        "-r",
-        String(options.fps),
-        "-c:v",
-        "libx264",
-        "-preset",
-        "fast",
-        "-crf",
-        "18",
-        "-pix_fmt",
-        "yuv420p",
-        "-movflags",
-        "+faststart",
-        options.output,
-      ],
-      { stdio: ["pipe", "ignore", "pipe"] },
-    );
-    ffmpeg.stderr.on("data", (chunk) => ffmpegErrors.push(chunk.toString()));
-
-    const totalFrames = Math.round(options.duration * options.fps);
-    let sourceIndex = 0;
-    for (let frameIndex = 0; frameIndex < totalFrames; frameIndex += 1) {
-      const targetSeconds = frameIndex / options.fps;
-      while (
-        sourceIndex + 1 < frameState.capturedFrames.length &&
-        frameState.capturedFrames[sourceIndex + 1].atSeconds <= targetSeconds
-      ) {
-        sourceIndex += 1;
-      }
-      const payload = frameState.capturedFrames[sourceIndex].payload;
-      if (!ffmpeg.stdin.write(payload)) await once(ffmpeg.stdin, "drain");
-    }
-
-    const ffmpegClosed = once(ffmpeg, "close");
-    ffmpeg.stdin.end();
     const [ffmpegCode] = await ffmpegClosed;
     if (ffmpegCode !== 0) {
       throw new Error(
         `FFmpeg exited with status ${ffmpegCode}: ${ffmpegErrors.join("").slice(-4000)}`,
       );
     }
+    const motion = sampleMotion(options.ffmpegBin, options.output);
 
     const result = {
       live_browser_recording: true,
-      capture_method: "chrome_devtools_screencast",
+      capture_method: "ffmpeg_avfoundation_screen",
+      ffmpeg_is_capture_source: true,
+      direct_realtime_capture: true,
       continuous_page_session: true,
       motion_profile: "cinematic_smooth",
-      buffered_capture: true,
+      buffered_capture: false,
       source_url: options.url,
       output: options.output,
       viewport: { width: options.width, height: options.height },
+      screen_device: options.screenDevice,
+      browser_viewport: viewport,
       duration_seconds: options.duration,
       fps: options.fps,
-      encoded_frames: totalFrames,
-      screencast_frames_received: frameState.received,
-      captured_screencast_frames: frameState.capturedFrames.length,
-      unique_screencast_frames: frameState.uniqueHashes.size,
+      motion_samples: motion.samples,
+      unique_motion_samples: motion.uniqueSamples,
       actions: executed,
       scroll_traces: scrollTraces,
     };

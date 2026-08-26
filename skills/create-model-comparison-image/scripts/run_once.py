@@ -41,6 +41,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout-seconds", type=int, default=1800)
     parser.add_argument("--pi-bin", default="pi")
     parser.add_argument(
+        "--sampling-params-json",
+        default=None,
+        help=(
+            "Optional JSON object merged into Pi's model request. Use this for "
+            "Gateway provider_options that must reach the selected vendor."
+        ),
+    )
+    parser.add_argument(
         "--base-url",
         default=None,
         help=(
@@ -65,8 +73,33 @@ def effective_prompt(brief: str) -> str:
     return f"{brief.strip()}\n\n{FINAL_INSTRUCTION.strip()}"
 
 
-def pi_config(*, model: str, label: str, base_url: str) -> dict[str, Any]:
+def parse_sampling_params(raw: str | None) -> dict[str, Any] | None:
+    if raw is None:
+        return None
+    value = json.loads(raw)
+    if not isinstance(value, dict):
+        raise ValueError("--sampling-params-json must decode to a JSON object")
+    return value
+
+
+def pi_config(
+    *,
+    model: str,
+    label: str,
+    base_url: str,
+    sampling_params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     model_id = gateway_model_id(model)
+    model_config: dict[str, Any] = {
+        "id": model_id,
+        "name": label,
+        "reasoning": True,
+        "input": ["text"],
+        "contextWindow": 500000,
+        "maxTokens": 16384,
+    }
+    if sampling_params:
+        model_config["samplingParams"] = sampling_params
     return {
         "providers": {
             PI_PROVIDER: {
@@ -75,29 +108,31 @@ def pi_config(*, model: str, label: str, base_url: str) -> dict[str, Any]:
                 "api": "openai-completions",
                 "apiKey": "$MERGE_GATEWAY_API_KEY",
                 "compat": {"supportsReasoningEffort": False},
-                "models": [
-                    {
-                        "id": model_id,
-                        "name": label,
-                        "reasoning": True,
-                        "input": ["text"],
-                        "contextWindow": 500000,
-                        "maxTokens": 16384,
-                    }
-                ],
+                "models": [model_config],
             }
         }
     }
 
 
 def write_pi_config(
-    config_dir: Path, *, model: str, label: str, base_url: str
+    config_dir: Path,
+    *,
+    model: str,
+    label: str,
+    base_url: str,
+    sampling_params: dict[str, Any] | None = None,
 ) -> Path:
     config_dir.mkdir(parents=True, exist_ok=False)
     config_file = config_dir / "models.json"
     config_file.write_text(
         json.dumps(
-            pi_config(model=model, label=label, base_url=base_url), indent=2
+            pi_config(
+                model=model,
+                label=label,
+                base_url=base_url,
+                sampling_params=sampling_params,
+            ),
+            indent=2,
         )
         + "\n",
         encoding="utf-8",
@@ -164,6 +199,13 @@ def run_model(args: argparse.Namespace) -> int:
         write_result(result_file, result)
         return 1
 
+    try:
+        sampling_params = parse_sampling_params(args.sampling_params_json)
+    except (json.JSONDecodeError, ValueError) as error:
+        result["error"] = f"Invalid sampling parameters: {error}"
+        write_result(result_file, result)
+        return 1
+
     config_dir = workspace / ".pi-agent"
     if config_dir.exists():
         result["error"] = f"Refusing to reuse Pi config directory: {config_dir}"
@@ -182,6 +224,7 @@ def run_model(args: argparse.Namespace) -> int:
         model=args.model,
         label=args.label,
         base_url=base_url,
+        sampling_params=sampling_params,
     )
     command = build_command(pi_bin=args.pi_bin, model=args.model, prompt=prompt)
     env = os.environ.copy()

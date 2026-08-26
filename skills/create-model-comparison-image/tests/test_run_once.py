@@ -37,6 +37,7 @@ class PiRunnerTests(unittest.TestCase):
             "timeout_seconds": 30,
             "pi_bin": "pi",
             "base_url": None,
+            "sampling_params_json": None,
         }
         values.update(overrides)
         return types.SimpleNamespace(**values)
@@ -73,6 +74,28 @@ class PiRunnerTests(unittest.TestCase):
 
         self.assertEqual(model["maxTokens"], 16384)
         self.assertLessEqual(model["maxTokens"], 131072)
+
+    def test_isolated_config_preserves_gateway_provider_options(self) -> None:
+        sampling_params = {
+            "provider_options": {"qwen": {"thinking": {"type": "disabled"}}}
+        }
+        config = self.runner.pi_config(
+            model="qwen/qwen3.8-max",
+            label="Qwen3.8 Max",
+            base_url="https://gateway.example/v1/openai",
+            sampling_params=sampling_params,
+        )
+        model = config["providers"]["merge-gateway"]["models"][0]
+
+        self.assertEqual(model["samplingParams"], sampling_params)
+
+    def test_sampling_params_must_be_a_json_object(self) -> None:
+        self.assertEqual(
+            self.runner.parse_sampling_params('{"temperature": 0.2}'),
+            {"temperature": 0.2},
+        )
+        with self.assertRaisesRegex(ValueError, "must decode to a JSON object"):
+            self.runner.parse_sampling_params("[]")
 
     def test_command_is_one_fresh_pi_run_with_one_prompt(self) -> None:
         command = self.runner.build_command(
