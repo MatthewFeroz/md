@@ -1,0 +1,4 @@
+interface:
+  display_name: "Confirm Ordinal Writes"
+  short_description: "Require approval before every Ordinal change"
+  default_prompt: "Use $confirm-ordinal-writes to handle this Ordinal request with confirmation before any write."
