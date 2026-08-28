@@ -181,7 +181,9 @@ def data_uri(path: Path) -> str:
     return f"data:{mime};base64,{payload}"
 
 
-def run_chrome(chrome: Path, arguments: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+def run_chrome(
+    chrome: Path, arguments: list[str], *, cwd: Path
+) -> subprocess.CompletedProcess[str]:
     """Run one headless Chrome invocation under a hard wall-clock cap.
 
     Chrome is started in its own process group so a timeout can reap the whole
@@ -236,7 +238,12 @@ def measured_names(dom: str) -> tuple[tuple[float, float], tuple[float, float]]:
 
 
 def header_lockup(
-    model: str, logo: Path, center_x: float, name_width: float, name_size: float, suffix: str
+    model: str,
+    logo: Path,
+    center_x: float,
+    name_width: float,
+    name_size: float,
+    suffix: str,
 ) -> str:
     logo_box = LOGO_BOXES[suffix]
     max_width = HEADER_MAX_WIDTHS[suffix]
@@ -294,8 +301,12 @@ def write_svg(
     merge_wordmark: Path,
     name_metrics: tuple[tuple[float, float], tuple[float, float]],
 ) -> None:
-    header_a = header_lockup(model_a, logo_a, 480, name_metrics[0][0], name_metrics[0][1], "a")
-    header_b = header_lockup(model_b, logo_b, 1440, name_metrics[1][0], name_metrics[1][1], "b")
+    header_a = header_lockup(
+        model_a, logo_a, 480, name_metrics[0][0], name_metrics[0][1], "a"
+    )
+    header_b = header_lockup(
+        model_b, logo_b, 1440, name_metrics[1][0], name_metrics[1][1], "b"
+    )
     svg = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
   width="1920" height="1080" viewBox="0 0 1920 1080">
@@ -352,15 +363,21 @@ def main() -> int:
     shot_b = find_asset(folder, "shot-b", (".png",))
     for shot in (shot_a, shot_b):
         if png_dimensions(shot) != (1440, 1024):
-            raise SystemExit(f"{shot.name} must be exactly 1440x1024; got {png_dimensions(shot)}")
+            raise SystemExit(
+                f"{shot.name} must be exactly 1440x1024; got {png_dimensions(shot)}"
+            )
     retina_a = find_retina_shot(folder, "shot-a", (1440, 1024))
     retina_b = find_retina_shot(folder, "shot-b", (1440, 1024))
 
     rendered_html = template.replace("{{MODEL_A}}", html.escape(args.model_a)).replace(
         "{{MODEL_B}}", html.escape(args.model_b)
     )
-    rendered_html = rendered_html.replace('data-src="logo-a.svg"', f'data-src="{logo_a.name}"')
-    rendered_html = rendered_html.replace('data-src="logo-b.svg"', f'data-src="{logo_b.name}"')
+    rendered_html = rendered_html.replace(
+        'data-src="logo-a.svg"', f'data-src="{logo_a.name}"'
+    )
+    rendered_html = rendered_html.replace(
+        'data-src="logo-b.svg"', f'data-src="{logo_b.name}"'
+    )
     # One document serves both renders: Chrome resolves srcset against the device
     # scale factor, so the 1x pass keeps the 1x capture and the 2x pass picks the
     # 2x capture without a second template.
@@ -404,7 +421,12 @@ def main() -> int:
     run_chrome(chrome, [*common, f"--screenshot={output_png}", page_url], cwd=folder)
     run_chrome(
         chrome,
-        [*common, "--force-device-scale-factor=2", f"--screenshot={output_2x}", page_url],
+        [
+            *common,
+            "--force-device-scale-factor=2",
+            f"--screenshot={output_2x}",
+            page_url,
+        ],
         cwd=folder,
     )
 

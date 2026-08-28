@@ -9,6 +9,8 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = SKILL_DIR / "scripts"
 SCRIPT = SCRIPT_DIR / "render_video.py"
+
+
 def load_renderer():
     sys.path.insert(0, str(SCRIPT_DIR))
     try:
@@ -49,7 +51,9 @@ class ComparisonVideoRenderTests(unittest.TestCase):
         self.assertIn("width: 855px; height: 615px", html)
         self.assertIn("border-radius: 8.152px", html)
 
-    def test_publishable_video_composites_both_models_into_comparison_panels(self) -> None:
+    def test_publishable_video_composites_both_models_into_comparison_panels(
+        self,
+    ) -> None:
         command = self.renderer.build_ffmpeg_command(
             "ffmpeg",
             Path("comparison.png"),
@@ -81,7 +85,9 @@ class ComparisonVideoRenderTests(unittest.TestCase):
         probe_b = {"format": {"duration": "6.500000"}}
 
         self.assertEqual(self.renderer.comparison_duration(probe_a, probe_b, None), 6.5)
-        with self.assertRaisesRegex(SystemExit, "both comparison panels must remain moving"):
+        with self.assertRaisesRegex(
+            SystemExit, "both comparison panels must remain moving"
+        ):
             self.renderer.comparison_duration(probe_a, probe_b, 7.0)
 
     def test_skill_publishes_only_the_two_panel_comparison_video(self) -> None:
@@ -90,7 +96,9 @@ class ComparisonVideoRenderTests(unittest.TestCase):
         self.assertIn("--comparison", instructions)
         self.assertIn("--video-a", instructions)
         self.assertIn("--video-b", instructions)
-        self.assertIn("The only publishable video is the combined", instructions)
+        self.assertIn(
+            "Publish the 1920x1080 PNG and final 1920x1080 H.264 MP4", instructions
+        )
         self.assertNotIn('--input "<output-folder>/<video-stem>-raw.mp4"', instructions)
 
 

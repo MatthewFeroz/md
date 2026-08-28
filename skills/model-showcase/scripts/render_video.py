@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from render_comparison import (
+from render_showcase import (
     CANVAS,
     FIGMA_FILE_KEY,
     FIGMA_LAYOUT_NODE_ID,
@@ -48,7 +48,7 @@ def parse_args() -> argparse.Namespace:
         "--comparison",
         required=True,
         type=Path,
-        help="1920x1080 comparison PNG produced by render_comparison.py",
+        help="1920x1080 comparison PNG produced by render_showcase.py",
     )
     parser.add_argument("--video-a", required=True, type=Path, help="Raw model A MP4")
     parser.add_argument("--video-b", required=True, type=Path, help="Raw model B MP4")
@@ -121,7 +121,12 @@ def probe_video(ffprobe: str, path: Path) -> dict[str, object]:
     stream = streams[0]
     width = stream.get("width")
     height = stream.get("height")
-    if not isinstance(width, int) or not isinstance(height, int) or width <= 0 or height <= 0:
+    if (
+        not isinstance(width, int)
+        or not isinstance(height, int)
+        or width <= 0
+        or height <= 0
+    ):
         raise SystemExit(f"Could not determine video dimensions for {path}")
     video_duration(payload, path)
     return payload
@@ -144,7 +149,9 @@ def comparison_duration(
     probe_b: dict[str, object],
     requested: float | None,
 ) -> float:
-    available = min(video_duration(probe_a, "model A"), video_duration(probe_b, "model B"))
+    available = min(
+        video_duration(probe_a, "model A"), video_duration(probe_b, "model B")
+    )
     if requested is None:
         return available
     if not math.isfinite(requested) or requested <= 0:
@@ -248,12 +255,14 @@ def validate_comparison(comparison: Path) -> dict[str, object]:
     if not audit_path.is_file():
         raise SystemExit(
             f"Comparison audit not found: {audit_path}; render the frame with "
-            "render_comparison.py first"
+            "render_showcase.py first"
         )
     try:
         audit = json.loads(audit_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise SystemExit(f"Could not read comparison audit {audit_path}: {error}") from None
+        raise SystemExit(
+            f"Could not read comparison audit {audit_path}: {error}"
+        ) from None
 
     badge = audit.get("merge_badge")
     expected = {
@@ -262,8 +271,12 @@ def validate_comparison(comparison: Path) -> dict[str, object]:
         "asset_sha256": MERGE_BADGE_FILES,
     }
     if audit.get("figma_layout_node_id") != FIGMA_LAYOUT_NODE_ID:
-        raise SystemExit("Comparison was not rendered from the locked full-frame Figma node")
-    if not isinstance(badge, dict) or any(badge.get(key) != value for key, value in expected.items()):
+        raise SystemExit(
+            "Comparison was not rendered from the locked full-frame Figma node"
+        )
+    if not isinstance(badge, dict) or any(
+        badge.get(key) != value for key, value in expected.items()
+    ):
         raise SystemExit("Comparison does not contain the hash-locked MERGE badge")
     if Path(str(audit.get("png", ""))).name != comparison.name:
         raise SystemExit("Comparison PNG does not match its render-result.json audit")

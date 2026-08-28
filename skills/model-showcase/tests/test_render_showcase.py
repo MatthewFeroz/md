@@ -8,13 +8,13 @@ from pathlib import Path
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
-SCRIPT = SKILL_DIR / "scripts" / "render_comparison.py"
+SCRIPT = SKILL_DIR / "scripts" / "render_showcase.py"
 ASSET_DIR = SKILL_DIR / "assets" / "merge-badge"
 TEMPLATE = SKILL_DIR / "template.html"
 
 
 def load_renderer():
-    spec = importlib.util.spec_from_file_location("render_comparison", SCRIPT)
+    spec = importlib.util.spec_from_file_location("render_showcase", SCRIPT)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Could not load {SCRIPT}")
     module = importlib.util.module_from_spec(spec)
@@ -37,7 +37,9 @@ class MergeBadgeRenderTests(unittest.TestCase):
             output = Path(temp)
             mark, wordmark = self.renderer.stage_merge_badge(SKILL_DIR, output)
 
-            self.assertEqual(mark.read_bytes(), (ASSET_DIR / "merge-mark.svg").read_bytes())
+            self.assertEqual(
+                mark.read_bytes(), (ASSET_DIR / "merge-mark.svg").read_bytes()
+            )
             self.assertEqual(
                 wordmark.read_bytes(),
                 (ASSET_DIR / "merge-wordmark.svg").read_bytes(),

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -11,18 +12,27 @@ SCRIPT = SKILL_DIR / "scripts" / "record_site.mjs"
 
 class LiveSiteRecorderTests(unittest.TestCase):
     def test_recorder_is_valid_javascript(self) -> None:
-        result = subprocess.run(
-            ["node", "--check", str(SCRIPT)],
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
+        with tempfile.TemporaryDirectory() as temp:
+            result = subprocess.run(
+                [
+                    "bun",
+                    "build",
+                    str(SCRIPT),
+                    "--target",
+                    "bun",
+                    "--outfile",
+                    str(Path(temp) / "record_site.js"),
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_help_describes_a_continuous_live_recording(self) -> None:
         result = subprocess.run(
-            ["node", str(SCRIPT), "--help"],
+            ["bun", "run", str(SCRIPT), "--help"],
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -38,10 +48,10 @@ class LiveSiteRecorderTests(unittest.TestCase):
         source = SCRIPT.read_text(encoding="utf-8")
 
         self.assertIn('"avfoundation"', source)
-        self.assertIn('ffmpeg_is_capture_source: true', source)
-        self.assertIn('direct_realtime_capture: true', source)
-        self.assertIn('continuous_page_session: true', source)
-        self.assertNotIn('Page.startScreencast', source)
+        self.assertIn("ffmpeg_is_capture_source: true", source)
+        self.assertIn("direct_realtime_capture: true", source)
+        self.assertIn("continuous_page_session: true", source)
+        self.assertNotIn("Page.startScreencast", source)
         self.assertNotIn('"image2pipe"', source)
 
     def test_scroll_capture_uses_a_slow_recorder_owned_motion_profile(self) -> None:
@@ -80,7 +90,7 @@ class LiveSiteRecorderTests(unittest.TestCase):
 
         self.assertIn('"--enable-webgl"', source)
         self.assertIn('"--ignore-gpu-blocklist"', source)
-        self.assertIn('webgl_capture: options.webgl', source)
+        self.assertIn("webgl_capture: options.webgl", source)
 
     def test_retina_capture_scales_physical_pixels_to_the_target_viewport(self) -> None:
         source = SCRIPT.read_text(encoding="utf-8")
@@ -94,8 +104,11 @@ class LiveSiteRecorderTests(unittest.TestCase):
         instructions = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 
         self.assertIn("scripts/record_site.mjs", instructions)
-        self.assertIn("one continuous live Chrome session", instructions)
-        self.assertIn("native screen-capture input as the recorder", instructions)
+        self.assertIn("record each live demo", instructions)
+        self.assertIn(
+            "recording audits to report FFmpeg as the real-time capture source",
+            instructions,
+        )
 
 
 if __name__ == "__main__":

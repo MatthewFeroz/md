@@ -22,7 +22,7 @@ const sleep = (milliseconds) =>
   new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds));
 
 function usage() {
-  return `Usage: node record_site.mjs --url <url> --output <video.mp4> [options]
+  return `Usage: bun run record_site.mjs --url <url> --output <video.mp4> [options]
 
 Record one continuous live Chrome page session with FFmpeg's native screen capture.
 

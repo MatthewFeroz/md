@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Showcase"
+  short_description: "Build polished two-model social showcases"
+  default_prompt: "Use $model-showcase to build a polished image and video comparison for two Merge Gateway models."

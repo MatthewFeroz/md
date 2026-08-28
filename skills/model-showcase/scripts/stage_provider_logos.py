@@ -23,7 +23,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--folder", required=True, type=Path)
     parser.add_argument("--model-a")
     parser.add_argument("--model-b")
-    parser.add_argument("--asset-dir", type=Path, default=ASSET_DIR, help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--asset-dir", type=Path, default=ASSET_DIR, help=argparse.SUPPRESS
+    )
     args = parser.parse_args()
     if not args.model_a and not args.model_b:
         parser.error("at least one of --model-a or --model-b is required")
@@ -49,7 +51,9 @@ def load_catalog(asset_dir: Path) -> dict[str, dict[str, Any]]:
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"Could not load provider manifest {manifest_path}: {error}") from error
+        raise ValueError(
+            f"Could not load provider manifest {manifest_path}: {error}"
+        ) from error
 
     entries = manifest.get("assets")
     if not isinstance(entries, list) or not entries:
