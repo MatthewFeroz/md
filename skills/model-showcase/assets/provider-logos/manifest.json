@@ -1,0 +1,246 @@
+{
+  "generated_at": "2026-07-29",
+  "catalog": {
+    "source": "https://api-gateway.merge.dev/v1/models?limit=500",
+    "model_count": 248,
+    "provider_count": 22
+  },
+  "png_exports": {
+    "logo_only": {
+      "filename": "<provider>.png",
+      "dimensions": "2048x2048",
+      "background": "transparent",
+      "padding": "128px minimum"
+    },
+    "name_and_logo": {
+      "filename": "<provider>-wordmark.png",
+      "maximum_long_edge": 4096,
+      "background": "transparent",
+      "padding": "128px"
+    },
+    "rasterization_source": "corresponding normalized SVG master"
+  },
+  "assets": [
+    {
+      "provider": "ai21",
+      "display_name": "AI21",
+      "logo_only": "ai21.svg",
+      "name_and_logo": "ai21-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "amazon",
+      "display_name": "Amazon Web Services",
+      "logo_only": "amazon.svg",
+      "name_and_logo": "amazon-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high",
+      "note": "AWS lockup used for MERGE canonical provider ID amazon"
+    },
+    {
+      "provider": "anthropic",
+      "display_name": "Anthropic",
+      "logo_only": "anthropic.svg",
+      "name_and_logo": "anthropic-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "arcee-ai",
+      "display_name": "Arcee AI",
+      "logo_only": "arcee-ai.svg",
+      "name_and_logo": "arcee-ai-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "bytedance",
+      "display_name": "ByteDance",
+      "logo_only": "bytedance.svg",
+      "name_and_logo": "bytedance-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "cohere",
+      "display_name": "Cohere",
+      "logo_only": "cohere.svg",
+      "name_and_logo": "cohere-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "deepseek",
+      "display_name": "DeepSeek",
+      "logo_only": "deepseek.svg",
+      "name_and_logo": "deepseek-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "google",
+      "display_name": "Google",
+      "logo_only": "google.svg",
+      "name_and_logo": "google-wordmark.svg",
+      "source": "https://api.iconify.design/logos/",
+      "source_type": "public no-auth SVG API",
+      "transformation": "No visual changes",
+      "confidence": "high"
+    },
+    {
+      "provider": "meta",
+      "display_name": "Meta",
+      "logo_only": "meta.svg",
+      "name_and_logo": "meta-wordmark.svg",
+      "source": "https://api.iconify.design/logos/",
+      "source_type": "public no-auth SVG API",
+      "transformation": "No visual changes",
+      "confidence": "high"
+    },
+    {
+      "provider": "minimax",
+      "display_name": "MiniMax",
+      "logo_only": "minimax.svg",
+      "name_and_logo": "minimax-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "mistral",
+      "display_name": "Mistral AI",
+      "logo_only": "mistral.svg",
+      "name_and_logo": "mistral-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "moonshot",
+      "display_name": "Moonshot AI",
+      "logo_only": "moonshot.svg",
+      "name_and_logo": "moonshot-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "morph",
+      "display_name": "Morph",
+      "logo_only": "morph.svg",
+      "name_and_logo": "morph-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "nvidia",
+      "display_name": "NVIDIA",
+      "logo_only": "nvidia.svg",
+      "name_and_logo": "nvidia-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "openai",
+      "display_name": "OpenAI",
+      "logo_only": "openai.svg",
+      "name_and_logo": "openai-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "qwen",
+      "display_name": "Qwen",
+      "logo_only": "qwen.svg",
+      "name_and_logo": "qwen-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "sakana",
+      "display_name": "Sakana AI",
+      "logo_only": "sakana.svg",
+      "name_and_logo": "sakana-wordmark.svg",
+      "source": "https://sakana.ai/sakana-logo.png",
+      "source_type": "official provider website",
+      "transformation": "Transparent PNG trimmed and traced to color vector paths with VTracer 0.6.12",
+      "confidence": "high"
+    },
+    {
+      "provider": "thinkingmachines",
+      "display_name": "Thinking Machines Lab",
+      "logo_only": "thinkingmachines.svg",
+      "name_and_logo": "thinkingmachines-wordmark.svg",
+      "source": "https://thinkingmachines.ai/",
+      "source_type": "official provider website",
+      "transformation": "Official favicon geometry recreated as SVG; official Chakra Petch Medium wordmark converted to outlines",
+      "confidence": "high"
+    },
+    {
+      "provider": "writer",
+      "display_name": "Writer",
+      "logo_only": "writer.svg",
+      "name_and_logo": "writer-wordmark.svg",
+      "source": "https://writer.com/",
+      "source_type": "official provider website",
+      "transformation": "No visual changes",
+      "confidence": "high"
+    },
+    {
+      "provider": "xai",
+      "display_name": "xAI",
+      "logo_only": "xai.svg",
+      "name_and_logo": "xai-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "xiaomimimo",
+      "display_name": "Xiaomi MiMo",
+      "logo_only": "xiaomimimo.svg",
+      "name_and_logo": "xiaomimimo-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    },
+    {
+      "provider": "zai",
+      "display_name": "Z.ai",
+      "logo_only": "zai.svg",
+      "name_and_logo": "zai-wordmark.svg",
+      "source": "https://unpkg.com/@lobehub/icons-static-svg@1.94.0/icons/",
+      "source_type": "public AI/LLM icon package",
+      "transformation": "Explicit intrinsic dimensions added",
+      "confidence": "high"
+    }
+  ]
+}
